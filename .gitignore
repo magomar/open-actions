@@ -1,0 +1,21 @@
+# Local agent skills (mirrored under ~/.agents)
+.agents/
+
+# Local issue-tracker churn is governed by .beads/.gitignore
+
+# Rust build output per action
+actions/*/target/
+
+# Per-action frontend dependencies
+actions/*/pi/node_modules/
+
+# Per-action plugin bundle: ignore build output (compiled binary, built PI),
+# keep manifest.json, icon.svg, and action assets
+actions/*/plugin/*.sdPlugin/*
+!actions/*/plugin/*.sdPlugin/manifest.json
+!actions/*/plugin/*.sdPlugin/icon.svg
+!actions/*/plugin/*.sdPlugin/actions/
+!actions/*/plugin/*.sdPlugin/actions/**
+
+# Packaged plugin bundles
+actions/*/plugin/*.zip
