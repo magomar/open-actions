@@ -1,0 +1,20 @@
+{
+  "Name": "OpenCode Go Usage",
+  "Author": "mario",
+  "Version": "0.1.0",
+  "Category": "OpenCode",
+  "Icon": "icon",
+  "OS": [{ "Platform": "linux" }],
+  "CodePathLin": "opencode-usage",
+  "PropertyInspectorPath": "pi/index.html",
+  "Actions": [
+    {
+      "UUID": "io.github.mario.opencodeusage.usage",
+      "Name": "OpenCode Go Usage",
+      "Icon": "actions/usage",
+      "Tooltip": "Show OpenCode Go usage",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    }
+  ]
+}
