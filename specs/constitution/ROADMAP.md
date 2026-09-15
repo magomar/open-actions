@@ -16,7 +16,7 @@ Each milestone maps to one action directory under `actions/<name>/` and one numb
 - `[ ]` **[OpenCode Usage](../001_opencode_usage.md)** (`actions/opencode-usage/`): Display OpenCode Go 5-hour, weekly, or monthly usage on a device button — fixed metric or cycling (manual/periodic).
 
 ### Phase 2: Power Utilities (Priority: Medium)
-- *(None scheduled — to be added as new actions are identified.)*
+- `[ ]` **[Handy Transcribe](../002_handy_transcribe.md)** (`actions/handy-transcribe/`): Toggle Handy dictation from a button via its remote-control CLI, with optimistic recording feedback on the icon.
 
 ### Phase 3: Growth & Engagement (Priority: Low)
 - *(None scheduled.)*

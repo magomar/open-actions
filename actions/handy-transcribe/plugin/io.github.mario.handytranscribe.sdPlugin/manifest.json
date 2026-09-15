@@ -1,0 +1,21 @@
+{
+  "Name": "Handy Transcribe",
+  "Author": "mario",
+  "Version": "0.1.0",
+  "Category": "Handy",
+  "Icon": "icon",
+  "OS": [{ "Platform": "linux" }, { "Platform": "mac" }],
+  "CodePathLin": "handy-transcribe",
+  "CodePathMac": "handy-transcribe",
+  "PropertyInspectorPath": "pi/index.html",
+  "Actions": [
+    {
+      "UUID": "io.github.mario.handytranscribe.transcribe",
+      "Name": "Handy Transcribe",
+      "Icon": "actions/transcribe",
+      "Tooltip": "Toggle Handy transcription",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    }
+  ]
+}

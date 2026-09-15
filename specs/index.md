@@ -23,3 +23,4 @@ Table of contents providing progressive disclosure of project constitution and t
 | Spec | Title | Type | Status | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | [001](001_opencode_usage.md) | OpenCode Usage | Feature Spec | `draft` | A device action that surfaces OpenCode Go usage telemetry on a button. |
+| [002](002_handy_transcribe.md) | Handy Transcribe | Feature Spec | `draft` | A device action that toggles Handy transcription on a button. |
