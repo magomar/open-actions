@@ -19,3 +19,7 @@ actions/*/plugin/*.sdPlugin/*
 
 # Packaged plugin bundles
 actions/*/plugin/*.zip
+
+# br doctor per-run artifacts
+.doctor/
+.bv/
