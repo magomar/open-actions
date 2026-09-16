@@ -1,0 +1,23 @@
+:root { color: #d8d8d8; background: #2d2d2d; color-scheme: dark; font: 600 10pt system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+html, body { width: 100%; min-height: 100%; margin: 0; background: #2d2d2d; }
+.sdpi-wrapper { overflow-x: hidden; padding: 2px 0 10px; }
+.sdpi-item { display: flex; align-items: center; min-height: 32px; margin-top: 2px; }
+.sdpi-item-label { box-sizing: border-box; width: 50%; padding: 0 8px 0 16px; color: #9a9a9a; font-size: 9pt; font-weight: 600; text-align: left; }
+.sdpi-item-value { box-sizing: border-box; width: 50%; min-height: 26px; margin-right: 10px; padding: 0 4px; border: 1px solid #303030; border-radius: 0; color: #d8d8d8; background: #3d3d3d; font: inherit; }
+select.sdpi-item-value { padding: 2px 4px; }
+input[type="range"] { padding: 0; border: 0; background: transparent; }
+input[type="color"] { height: 26px; padding: 0 2px; }
+input:focus, select:focus { outline: 1px solid #61dafb; outline-offset: 0; }
+.sdpi-note { margin: 8px 16px 0; color: #9a9a9a; font-size: 9pt; font-weight: 400; line-height: 1.4; }
+.sdpi-note code { color: #d8d8d8; }
+.sdpi-heading { margin: 12px 16px 2px; color: #61dafb; font-size: 9pt; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.sdpi-status { margin: 8px 16px 0; padding: 6px 8px; border-left: 2px solid #61dafb; color: #d8d8d8; background: #333338; font-size: 9pt; font-weight: 400; line-height: 1.4; }
+.sdpi-status.error { border-left-color: #ef4444; color: #fca5a5; }
+.sdpi-row { display: flex; align-items: center; }
+.sdpi-button { margin: 8px 16px 0; padding: 6px 12px; border: 1px solid #4b4b52; border-radius: 4px; color: #d8d8d8; background: #3d3d3d; font: inherit; cursor: pointer; }
+.sdpi-button:hover { border-color: #61dafb; color: #fff; }
+.sdpi-button:disabled { opacity: .5; cursor: default; }
+.swatch-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 10px 0 0; }
+.swatch { display: flex; align-items: center; gap: 2px; }
+.swatch button { width: 20px; padding: 0; border: 1px solid #4b4b52; border-radius: 3px; color: #d8d8d8; background: #3d3d3d; font: inherit; line-height: 1; cursor: pointer; }
+.swatch button:hover { border-color: #ef4444; color: #fff; }

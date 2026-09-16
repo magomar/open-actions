@@ -1,0 +1,69 @@
+{
+  "Name": "Hue Control",
+  "Author": "mario",
+  "Version": "0.1.0",
+  "Category": "Philips Hue",
+  "Icon": "icon",
+  "OS": [{ "Platform": "linux" }, { "Platform": "mac" }],
+  "CodePathLin": "hue-control",
+  "CodePathMac": "hue-control",
+  "PropertyInspectorPath": "pi/index.html",
+  "Actions": [
+    {
+      "UUID": "io.github.mario.huecontrol.power",
+      "Name": "On / Off",
+      "Icon": "actions/power",
+      "Tooltip": "Toggle a Hue light or group",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.huecontrol.color",
+      "Name": "Color",
+      "Icon": "actions/color",
+      "Tooltip": "Set a Hue light or group to a fixed color",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.huecontrol.cycle",
+      "Name": "Color Cycle",
+      "Icon": "actions/cycle",
+      "Tooltip": "Step through a palette of colors, one per press",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.huecontrol.brightness",
+      "Name": "Brightness",
+      "Icon": "actions/brightness",
+      "Tooltip": "Set an absolute brightness level",
+      "Controllers": ["Keypad", "Encoder"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.huecontrol.brightness-rel",
+      "Name": "Brightness Steps",
+      "Icon": "actions/brightness-rel",
+      "Tooltip": "Nudge brightness up or down by a number of steps",
+      "Controllers": ["Keypad", "Encoder"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.huecontrol.temperature",
+      "Name": "Temperature",
+      "Icon": "actions/temperature",
+      "Tooltip": "Shift the color temperature between warm and cool",
+      "Controllers": ["Keypad", "Encoder"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.huecontrol.scene",
+      "Name": "Scene",
+      "Icon": "actions/scene",
+      "Tooltip": "Apply a scene to a Hue group",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    }
+  ]
+}
