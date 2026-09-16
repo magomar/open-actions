@@ -322,6 +322,15 @@ impl Core {
                             )
                             .await
                     }
+                    // Hue answers error 101 while the bridge is reachable but no link-button
+                    // press is pending. Report that as "waiting", not as a failure: the
+                    // inspector keeps polling until the button is pressed.
+                    Err(error) if error.link_button_pending() => {
+                        eprintln!("hue-control: {error}");
+                        instance
+                            .send_to_property_inspector(json!({ "event": "pairPending", "ip": ip }))
+                            .await
+                    }
                     Err(error) => {
                         instance
                             .send_to_property_inspector(
