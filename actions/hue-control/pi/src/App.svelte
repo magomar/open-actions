@@ -83,8 +83,20 @@
     }
   });
 
-  eventTarget.addEventListener("bridges" as any, (event: any) => {
-    discovered = event.detail?.payload?.bridges ?? [];
+  // OpenDeck relays everything the plugin sends as one "sendToPropertyInspector"
+  // message whose payload carries the real event name, so listening for "paired"
+  // directly never fires. Subscribe to the relay and dispatch on the inner name.
+  function onPluginEvent(name: string, handler: (payload: any) => void) {
+    eventTarget.addEventListener("sendToPropertyInspector", (event: any) => {
+      const payload = event.detail?.payload;
+      if (payload?.event === name) {
+        handler(payload);
+      }
+    });
+  }
+
+  onPluginEvent("bridges", (payload) => {
+    discovered = payload.bridges ?? [];
     busy = false;
     say(
       discovered.length
@@ -94,8 +106,8 @@
     );
   });
 
-  eventTarget.addEventListener("paired" as any, (event: any) => {
-    const { ip, id, username } = event.detail?.payload ?? {};
+  onPluginEvent("paired", (payload) => {
+    const { ip, id, username } = payload;
     stopPairing("");
     if (!ip || !username) {
       say("Pairing returned no username.", true);
@@ -110,12 +122,12 @@
     requestTargets(ip, username);
   });
 
-  eventTarget.addEventListener("pairError" as any, (event: any) => {
-    stopPairing(event.detail?.payload?.message ?? "Pairing failed.", true);
+  onPluginEvent("pairError", (payload) => {
+    stopPairing(payload.message ?? "Pairing failed.", true);
   });
 
-  eventTarget.addEventListener("targets" as any, (event: any) => {
-    const targets = event.detail?.payload?.targets ?? {};
+  onPluginEvent("targets", (payload) => {
+    const targets = payload.targets ?? {};
     groups = targets.groups ?? [];
     lights = targets.lights ?? [];
     scenes = targets.scenes ?? [];
@@ -123,9 +135,9 @@
     say(`${groups.length} room(s), ${lights.length} light(s), ${scenes.length} scene(s).`);
   });
 
-  eventTarget.addEventListener("targetError" as any, (event: any) => {
+  onPluginEvent("targetError", (payload) => {
     busy = false;
-    say(event.detail?.payload?.message ?? "Could not reach the bridge.", true);
+    say(payload.message ?? "Could not reach the bridge.", true);
   });
 
   function discover() {
