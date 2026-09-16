@@ -36,6 +36,14 @@ impl fmt::Display for BridgeError {
 
 impl std::error::Error for BridgeError {}
 
+impl BridgeError {
+    /// Hue reports "link button not pressed" as error 101. The bridge is reachable and
+    /// healthy; pairing simply has to wait for the user to press the button.
+    pub fn link_button_pending(&self) -> bool {
+        matches!(self, Self::Api { kind: 101, .. })
+    }
+}
+
 impl From<reqwest::Error> for BridgeError {
     fn from(error: reqwest::Error) -> Self {
         Self::Transport(error.to_string())
@@ -299,6 +307,21 @@ fn name_of(value: &Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn recognises_the_pending_link_button_error() {
+        let pending = BridgeError::Api {
+            kind: 101,
+            description: "link button not pressed".to_owned(),
+        };
+        assert!(pending.link_button_pending());
+        let unauthorized = BridgeError::Api {
+            kind: 1,
+            description: "unauthorized user".to_owned(),
+        };
+        assert!(!unauthorized.link_button_pending());
+        assert!(!BridgeError::Shape("whatever".to_owned()).link_button_pending());
+    }
 
     #[test]
     fn extracts_the_username_from_a_pairing_response() {

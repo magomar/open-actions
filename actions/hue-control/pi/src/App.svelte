@@ -34,7 +34,9 @@
   let status = $state("");
   let statusIsError = $state(false);
   let busy = $state(false);
+  let pairing = $state(false);
   let manualIp = $state("");
+  let pairTimer: ReturnType<typeof setInterval> | null = null;
 
   const settings = $derived({ ...defaults, ...$actionSettings });
   const bridges = $derived<Record<string, Bridge>>($globalSettings?.bridges ?? {});
@@ -94,7 +96,7 @@
 
   eventTarget.addEventListener("paired" as any, (event: any) => {
     const { ip, id, username } = event.detail?.payload ?? {};
-    busy = false;
+    stopPairing("");
     if (!ip || !username) {
       say("Pairing returned no username.", true);
       return;
@@ -109,8 +111,7 @@
   });
 
   eventTarget.addEventListener("pairError" as any, (event: any) => {
-    busy = false;
-    say(event.detail?.payload?.message ?? "Pairing failed.", true);
+    stopPairing(event.detail?.payload?.message ?? "Pairing failed.", true);
   });
 
   eventTarget.addEventListener("targets" as any, (event: any) => {
@@ -133,6 +134,18 @@
     sendToPlugin({ event: "discover" });
   }
 
+  function stopPairing(message: string, isError = false) {
+    if (pairTimer !== null) {
+      clearInterval(pairTimer);
+      pairTimer = null;
+    }
+    pairing = false;
+    busy = false;
+    if (message) {
+      say(message, isError);
+    }
+  }
+
   function pair() {
     const ip = manualIp.trim() || discovered[0]?.internalipaddress || activeBridge?.ip;
     if (!ip) {
@@ -140,8 +153,24 @@
       return;
     }
     busy = true;
-    say("Press the link button on the bridge, then wait…");
-    sendToPlugin({ event: "pair", ip });
+    pairing = true;
+    const deadline = Date.now() + 120_000;
+    // The bridge only accepts a pairing request for ~30s after the link button is pressed,
+    // so keep asking until it succeeds rather than making the user race a single attempt.
+    const attempt = () => {
+      if (!pairing) {
+        return;
+      }
+      const left = Math.ceil((deadline - Date.now()) / 1000);
+      if (left <= 0) {
+        stopPairing("No link-button press detected. Press the round button, then Pair again.", true);
+        return;
+      }
+      say(`Waiting for the link button — press the round button on top of the bridge (${left}s).`);
+      sendToPlugin({ event: "pair", ip });
+    };
+    attempt();
+    pairTimer = setInterval(attempt, 3000);
   }
 
   function selectBridge(id: string) {
@@ -223,9 +252,19 @@
         bind:value={manualIp}
       />
     </div>
+    <p class="sdpi-note">
+      Press the round link button on top of the bridge, then click Pair. The bridge accepts a
+      pairing request for about 30 seconds after the button is pressed.
+    </p>
     <div class="sdpi-row">
       <button class="sdpi-button" onclick={discover} disabled={busy}>Discover</button>
-      <button class="sdpi-button" onclick={pair} disabled={busy}>Pair</button>
+      {#if pairing}
+        <button class="sdpi-button" onclick={() => stopPairing("Pairing cancelled.")}>
+          Cancel
+        </button>
+      {:else}
+        <button class="sdpi-button" onclick={pair} disabled={busy}>Pair</button>
+      {/if}
     </div>
     {#if discovered.length}
       <div class="sdpi-item">

@@ -127,6 +127,12 @@ Target encoding: `g-<group-id>` selects a group; `l-<light-id>` selects an indiv
   - [ ] **When** the user selects the discovered bridge and clicks "Pair" in the property inspector
   - [ ] **Then** the plugin stores `{ip, username}` in global settings and the inspector lists the bridge's groups and lights
 
+- **Scenario: Pairing waits for the link button instead of failing**
+  - [x] **Given** a reachable Hue Bridge with no pending link-button press
+  - [x] **When** the user clicks "Pair" in the property inspector
+  - [x] **Then** the plugin reports the press as *pending* (Hue error 101) rather than a failure, the inspector shows "press the round link button on top of the bridge" with a countdown, and re-sends the request every 3 s for up to 120 s
+  - [ ] **And** once the link button is pressed, the plugin stores `{ip, username}` in global settings and the inspector lists the bridge's groups and lights
+
 - **Scenario: Toggle a group on and off**
   - [x] **Given** an On/Off action configured to a reachable group
   - [x] **When** the user presses the button
