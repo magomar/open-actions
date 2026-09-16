@@ -17,6 +17,7 @@ Each milestone maps to one action directory under `actions/<name>/` and one numb
 
 ### Phase 2: Power Utilities (Priority: Medium)
 - `[ ]` **[Handy Transcribe](../002_handy_transcribe.md)** (`actions/handy-transcribe/`): Toggle Handy dictation from a button via its remote-control CLI, with optimistic recording feedback on the icon.
+- `[ ]` **[Hue Control](../003_hue_control.md)** (`actions/hue-control/`): Control Philips Hue lights and rooms from the pad over the Bridge local API — On/Off, Color, Color Cycle, Brightness, Brightness Relative, Temperature, and Scene — replacing the partially working Elgato plugin.
 
 ### Phase 3: Growth & Engagement (Priority: Low)
 - *(None scheduled.)*
