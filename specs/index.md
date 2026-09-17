@@ -24,4 +24,4 @@ Table of contents providing progressive disclosure of project constitution and t
 | :--- | :--- | :--- | :--- | :--- |
 | [001](001_opencode_usage.md) | OpenCode Usage | Feature Spec | `draft` | A device action that surfaces OpenCode Go usage telemetry on a button. |
 | [002](002_handy_transcribe.md) | Handy Transcribe | Feature Spec | `draft` | A device action that toggles Handy transcription on a button. |
-| [003](003_hue_control.md) | Hue Control | Feature Spec | `implemented` | A native OpenAction plugin that controls Philips Hue lights over the Bridge local API — on/off, color, color cycle, brightness, temperature, and scenes. |
+| [003](003_hue_control.md) | Hue Control | Feature Spec | `implemented` | A native OpenAction plugin that controls Philips Hue lights over the Bridge local API — Switch, Color, Temperature, Brightness, and Scene (with fixed and cycling modes). |

@@ -11,13 +11,17 @@
   const defaults = {
     bridge: "",
     target: "",
+    mode: "fixed",
     color: "#ffcc66",
     colors: ["#ff0000", "#00ff00", "#0000ff"],
     brightness: 100,
+    brightnesses: [25, 50, 75, 100],
     scale_ticks: 1,
-    temperature: 366,
+    temperature: 50,
+    temperatures: [20, 50, 80],
     brightness_rel: 10,
     scene: "",
+    scenes: [],
   };
 
   type Bridge = { ip: string; username: string };
@@ -25,7 +29,13 @@
   type Light = { id: string; name: string };
 
   // The action kind is the last segment of the manifest UUID.
-  const kind = $derived(($actionInfo?.action ?? "").split(".").at(-1) ?? "");
+  const rawKind = $derived(($actionInfo?.action ?? "").split(".").at(-1) ?? "");
+  const kind = $derived(
+    rawKind === "power" ? "switch" :
+    rawKind === "cycle" ? "color" :
+    rawKind === "brightness-rel" ? "brightness" :
+    rawKind
+  );
 
   let discovered = $state<{ id: string; internalipaddress: string }[]>([]);
   let groups = $state<Group[]>([]);
@@ -225,8 +235,82 @@
     );
   }
 
+  function warmthToKelvin(warmth: number): number {
+    return Math.round(2000 + ((Math.max(1, Math.min(100, warmth)) - 1) * 4500) / 99);
+  }
+
+  function setTemperatureAt(index: number, value: number) {
+    const next = [...settings.temperatures];
+    next[index] = value;
+    update("temperatures", next);
+  }
+
+  function addTemperature() {
+    if (settings.temperatures.length >= 10) {
+      return;
+    }
+    update("temperatures", [...settings.temperatures, 50]);
+  }
+
+  function removeTemperatureAt(index: number) {
+    if (settings.temperatures.length <= 2) {
+      return;
+    }
+    update(
+      "temperatures",
+      settings.temperatures.filter((_: number, at: number) => at !== index),
+    );
+  }
+
+  function setBrightnessAt(index: number, value: number) {
+    const next = [...settings.brightnesses];
+    next[index] = value;
+    update("brightnesses", next);
+  }
+
+  function addBrightness() {
+    if (settings.brightnesses.length >= 10) {
+      return;
+    }
+    update("brightnesses", [...settings.brightnesses, 50]);
+  }
+
+  function removeBrightnessAt(index: number) {
+    if (settings.brightnesses.length <= 2) {
+      return;
+    }
+    update(
+      "brightnesses",
+      settings.brightnesses.filter((_: number, at: number) => at !== index),
+    );
+  }
+
+  function setSceneAt(index: number, value: string) {
+    const next = [...settings.scenes];
+    next[index] = value;
+    update("scenes", next);
+  }
+
+  function addScene() {
+    if (settings.scenes.length >= 10) {
+      return;
+    }
+    const fallback = groupScenes[0]?.id ?? "";
+    update("scenes", [...settings.scenes, fallback]);
+  }
+
+  function removeSceneAt(index: number) {
+    if (settings.scenes.length <= 2) {
+      return;
+    }
+    update(
+      "scenes",
+      settings.scenes.filter((_: string, at: number) => at !== index),
+    );
+  }
+
   const needsTarget = $derived(
-    ["power", "color", "cycle", "brightness", "brightness-rel", "temperature", "scene"].includes(kind),
+    ["switch", "color", "brightness", "temperature", "scene"].includes(kind),
   );
 </script>
 
@@ -322,107 +406,202 @@
       </select>
     </div>
 
-    {#if kind === "color"}
+    {#if ["color", "temperature", "brightness", "scene"].includes(kind)}
       <div class="sdpi-item">
-        <label class="sdpi-item-label" for="color-input">Color</label>
-        <input
+        <label class="sdpi-item-label" for="mode-select">Mode</label>
+        <select
           class="sdpi-item-value"
-          id="color-input"
-          type="color"
-          value={settings.color}
-          oninput={(event) => update("color", event.currentTarget.value)}
-        />
+          id="mode-select"
+          value={settings.mode || "fixed"}
+          onchange={(event) => update("mode", event.currentTarget.value)}
+        >
+          <option value="fixed">Fixed</option>
+          <option value="cycle">Cycle</option>
+        </select>
       </div>
     {/if}
 
-    {#if kind === "cycle"}
-      <div class="sdpi-item">
-        <label class="sdpi-item-label" for="cycle-0">Colors</label>
-        <div class="sdpi-item-value swatch-list" id="cycle-0">
-          {#each settings.colors as color, index (index)}
-            <span class="swatch">
-              <input
-                type="color"
-                value={color}
-                oninput={(event) => setColorAt(index, event.currentTarget.value)}
-              />
-              <button
-                type="button"
-                title="Remove"
-                onclick={() => removeColorAt(index)}
-                disabled={settings.colors.length <= 2}>−</button
-              >
-            </span>
-          {/each}
+    {#if kind === "color"}
+      {#if settings.mode === "cycle"}
+        <div class="sdpi-item">
+          <label class="sdpi-item-label" for="cycle-0">Colors</label>
+          <div class="sdpi-item-value swatch-list" id="cycle-0">
+            {#each settings.colors as color, index (index)}
+              <span class="swatch">
+                <input
+                  type="color"
+                  value={color}
+                  oninput={(event) => setColorAt(index, event.currentTarget.value)}
+                />
+                <button
+                  type="button"
+                  title="Remove"
+                  onclick={() => removeColorAt(index)}
+                  disabled={settings.colors.length <= 2}>−</button
+                >
+              </span>
+            {/each}
+          </div>
         </div>
-      </div>
-      <div class="sdpi-row">
-        <button class="sdpi-button" onclick={addColor} disabled={settings.colors.length >= 10}>
-          + Add color
-        </button>
-      </div>
+        <div class="sdpi-row">
+          <button class="sdpi-button" onclick={addColor} disabled={settings.colors.length >= 10}>
+            + Add color
+          </button>
+        </div>
+      {:else}
+        <div class="sdpi-item">
+          <label class="sdpi-item-label" for="color-input">Color</label>
+          <input
+            class="sdpi-item-value"
+            id="color-input"
+            type="color"
+            value={settings.color}
+            oninput={(event) => update("color", event.currentTarget.value)}
+          />
+        </div>
+      {/if}
     {/if}
 
     {#if kind === "brightness"}
-      <div class="sdpi-item">
-        <label class="sdpi-item-label" for="brightness-input">Brightness</label>
-        <input
-          class="sdpi-item-value"
-          id="brightness-input"
-          type="range"
-          min="1"
-          max="100"
-          value={settings.brightness}
-          oninput={(event) => update("brightness", Number(event.currentTarget.value))}
-        />
-      </div>
-    {/if}
-
-    {#if kind === "brightness-rel"}
-      <div class="sdpi-item">
-        <label class="sdpi-item-label" for="brightness-rel-input">Steps</label>
-        <input
-          class="sdpi-item-value"
-          id="brightness-rel-input"
-          type="range"
-          min="-50"
-          max="50"
-          value={settings.brightness_rel}
-          oninput={(event) => update("brightness_rel", Number(event.currentTarget.value))}
-        />
-      </div>
+      {#if settings.mode === "cycle"}
+        <div class="sdpi-item">
+          <label class="sdpi-item-label" for="bri-list">Levels</label>
+          <div class="sdpi-item-value item-list" id="bri-list">
+            {#each settings.brightnesses as bri, index (index)}
+              <div class="item-step">
+                <input
+                  type="range"
+                  min="1"
+                  max="100"
+                  value={bri}
+                  oninput={(event) => setBrightnessAt(index, Number(event.currentTarget.value))}
+                />
+                <span class="step-label">{bri}%</span>
+                <button
+                  type="button"
+                  title="Remove"
+                  onclick={() => removeBrightnessAt(index)}
+                  disabled={settings.brightnesses.length <= 2}>−</button
+                >
+              </div>
+            {/each}
+          </div>
+        </div>
+        <div class="sdpi-row">
+          <button class="sdpi-button" onclick={addBrightness} disabled={settings.brightnesses.length >= 10}>
+            + Add level
+          </button>
+        </div>
+      {:else}
+        <div class="sdpi-item">
+          <label class="sdpi-item-label" for="brightness-input">Brightness ({settings.brightness}%)</label>
+          <input
+            class="sdpi-item-value"
+            id="brightness-input"
+            type="range"
+            min="1"
+            max="100"
+            value={settings.brightness}
+            oninput={(event) => update("brightness", Number(event.currentTarget.value))}
+          />
+        </div>
+      {/if}
     {/if}
 
     {#if kind === "temperature"}
-      <div class="sdpi-item">
-        <label class="sdpi-item-label" for="temperature-input">Temperature</label>
-        <input
-          class="sdpi-item-value"
-          id="temperature-input"
-          type="range"
-          min="1"
-          max="100"
-          value={settings.temperature}
-          oninput={(event) => update("temperature", Number(event.currentTarget.value))}
-        />
-      </div>
+      {#if settings.mode === "cycle"}
+        <div class="sdpi-item">
+          <label class="sdpi-item-label" for="temp-list">Presets</label>
+          <div class="sdpi-item-value item-list" id="temp-list">
+            {#each settings.temperatures as temp, index (index)}
+              <div class="item-step">
+                <input
+                  type="range"
+                  min="1"
+                  max="100"
+                  value={temp}
+                  oninput={(event) => setTemperatureAt(index, Number(event.currentTarget.value))}
+                />
+                <span class="step-label">{warmthToKelvin(temp)}K</span>
+                <button
+                  type="button"
+                  title="Remove"
+                  onclick={() => removeTemperatureAt(index)}
+                  disabled={settings.temperatures.length <= 2}>−</button
+                >
+              </div>
+            {/each}
+          </div>
+        </div>
+        <div class="sdpi-row">
+          <button class="sdpi-button" onclick={addTemperature} disabled={settings.temperatures.length >= 10}>
+            + Add preset
+          </button>
+        </div>
+      {:else}
+        <div class="sdpi-item">
+          <label class="sdpi-item-label" for="temperature-input">Temperature ({warmthToKelvin(settings.temperature)}K)</label>
+          <input
+            class="sdpi-item-value"
+            id="temperature-input"
+            type="range"
+            min="1"
+            max="100"
+            value={settings.temperature}
+            oninput={(event) => update("temperature", Number(event.currentTarget.value))}
+          />
+        </div>
+      {/if}
     {/if}
 
     {#if kind === "scene"}
-      <div class="sdpi-item">
-        <label class="sdpi-item-label" for="scene-select">Scene</label>
-        <select
-          class="sdpi-item-value"
-          id="scene-select"
-          value={settings.scene}
-          onchange={(event) => update("scene", event.currentTarget.value)}
-        >
-          <option value="">— select —</option>
-          {#each groupScenes as scene (scene.id)}
-            <option value={scene.id}>{scene.name}</option>
-          {/each}
-        </select>
-      </div>
+      {#if settings.mode === "cycle"}
+        <div class="sdpi-item">
+          <label class="sdpi-item-label" for="scene-list">Scenes</label>
+          <div class="sdpi-item-value item-list" id="scene-list">
+            {#each settings.scenes as scId, index (index)}
+              <div class="item-step">
+                <select
+                  class="step-select"
+                  value={scId}
+                  onchange={(event) => setSceneAt(index, event.currentTarget.value)}
+                >
+                  <option value="">— select —</option>
+                  {#each groupScenes as scene (scene.id)}
+                    <option value={scene.id}>{scene.name}</option>
+                  {/each}
+                </select>
+                <button
+                  type="button"
+                  title="Remove"
+                  onclick={() => removeSceneAt(index)}
+                  disabled={settings.scenes.length <= 2}>−</button
+                >
+              </div>
+            {/each}
+          </div>
+        </div>
+        <div class="sdpi-row">
+          <button class="sdpi-button" onclick={addScene} disabled={settings.scenes.length >= 10}>
+            + Add scene
+          </button>
+        </div>
+      {:else}
+        <div class="sdpi-item">
+          <label class="sdpi-item-label" for="scene-select">Scene</label>
+          <select
+            class="sdpi-item-value"
+            id="scene-select"
+            value={settings.scene}
+            onchange={(event) => update("scene", event.currentTarget.value)}
+          >
+            <option value="">— select —</option>
+            {#each groupScenes as scene (scene.id)}
+              <option value={scene.id}>{scene.name}</option>
+            {/each}
+          </select>
+        </div>
+      {/if}
       {#if !targetValue.startsWith("g-")}
         <p class="sdpi-note">Scenes apply to a group. Select a group above.</p>
       {/if}

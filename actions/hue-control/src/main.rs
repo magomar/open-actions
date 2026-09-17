@@ -30,11 +30,9 @@ enum Fail {
 /// The action variants: one UUID each, one shared machinery.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Kind {
-    Power,
+    Switch,
     Color,
-    Cycle,
     Brightness,
-    BrightnessRel,
     Temperature,
     Scene,
 }
@@ -91,21 +89,40 @@ impl Core {
             return icon::status("Set up");
         }
         match kind {
-            Kind::Power => icon::status("Hue"),
-            Kind::Color => icon::color(&normalize_hex(&settings.color)),
-            Kind::Cycle => {
-                let palette = settings.effective_colors();
-                icon::cycle(&palette[0], 0, palette.len())
+            Kind::Switch => icon::status("Hue"),
+            Kind::Color => {
+                if settings.is_cycle() {
+                    let palette = settings.effective_colors();
+                    icon::cycle(&palette[0], 0, palette.len())
+                } else {
+                    icon::color(&normalize_hex(&settings.color))
+                }
             }
-            Kind::Brightness => icon::brightness(settings.brightness.min(100)),
-            Kind::BrightnessRel => {
-                icon::brightness_relative(settings.brightness_rel.clamp(-50, 50))
+            Kind::Brightness => {
+                if settings.is_cycle() {
+                    let levels = settings.effective_brightnesses();
+                    icon::brightness_cycle(levels[0], 0, levels.len())
+                } else {
+                    icon::brightness(settings.brightness.min(100))
+                }
             }
             Kind::Temperature => {
-                icon::temperature(warmth_to_kelvin(settings.temperature.clamp(1, 100)))
+                if settings.is_cycle() {
+                    let steps = settings.effective_temperatures();
+                    icon::temperature_cycle(warmth_to_kelvin(steps[0]), 0, steps.len())
+                } else {
+                    icon::temperature(warmth_to_kelvin(settings.temperature.clamp(1, 100)))
+                }
             }
             Kind::Scene => {
-                if settings.scene.trim().is_empty() {
+                if settings.is_cycle() {
+                    let seq = settings.effective_scenes();
+                    if seq.is_empty() {
+                        icon::status("Pick scenes")
+                    } else {
+                        icon::scene_cycle(0, seq.len())
+                    }
+                } else if settings.scene.trim().is_empty() {
                     icon::status("Pick scene")
                 } else {
                     icon::scene()
@@ -120,7 +137,7 @@ impl Core {
         instance: &Instance,
         settings: &Settings,
     ) -> OpenActionResult<()> {
-        if kind == Kind::Power {
+        if kind == Kind::Switch {
             let image = match self.resolve(settings).await {
                 Ok((bridge, target)) => match bridge.read_state(&target).await {
                     Ok(state) => {
@@ -162,7 +179,7 @@ impl Core {
         instance: &Instance,
         settings: &Settings,
     ) -> OpenActionResult<()> {
-        if kind == Kind::Power {
+        if kind == Kind::Switch {
             return self.toggle_power(instance, settings).await;
         }
 
@@ -175,70 +192,107 @@ impl Core {
         }
 
         let outcome: Result<String, BridgeError> = match kind {
-            Kind::Power => unreachable!("power is handled above"),
+            Kind::Switch => unreachable!("switch is handled above"),
             Kind::Color => {
-                let hex = normalize_hex(&settings.color);
-                match settings::hex_to_xy(&hex) {
-                    Some(xy) => bridge
-                        .set_state(&target, json!({ "on": true, "xy": xy }))
-                        .await
-                        .map(|()| icon::color(&hex)),
-                    None => Err(BridgeError::Shape("invalid color".to_owned())),
-                }
-            }
-            Kind::Cycle => {
-                let palette = settings.effective_colors();
-                let index = {
-                    let mut instances = self.instances.lock().await;
-                    let state = instances.entry(instance.instance_id.clone()).or_default();
-                    take_index(&mut state.cursor, palette.len())
-                };
-                let hex = palette[index].clone();
-                match settings::hex_to_xy(&hex) {
-                    Some(xy) => bridge
-                        .set_state(&target, json!({ "on": true, "xy": xy }))
-                        .await
-                        .map(|()| icon::cycle(&hex, index, palette.len())),
-                    None => Err(BridgeError::Shape("invalid color".to_owned())),
+                if settings.is_cycle() {
+                    let palette = settings.effective_colors();
+                    let index = {
+                        let mut instances = self.instances.lock().await;
+                        let state = instances.entry(instance.instance_id.clone()).or_default();
+                        take_index(&mut state.cursor, palette.len())
+                    };
+                    let hex = palette[index].clone();
+                    match settings::hex_to_xy(&hex) {
+                        Some(xy) => bridge
+                            .set_state(&target, json!({ "on": true, "xy": xy }))
+                            .await
+                            .map(|()| icon::cycle(&hex, index, palette.len())),
+                        None => Err(BridgeError::Shape("invalid color".to_owned())),
+                    }
+                } else {
+                    let hex = normalize_hex(&settings.color);
+                    match settings::hex_to_xy(&hex) {
+                        Some(xy) => bridge
+                            .set_state(&target, json!({ "on": true, "xy": xy }))
+                            .await
+                            .map(|()| icon::color(&hex)),
+                        None => Err(BridgeError::Shape("invalid color".to_owned())),
+                    }
                 }
             }
             Kind::Brightness => {
-                let percent = settings.brightness.min(100);
-                let bri = settings::percent_to_bri(percent);
-                bridge
-                    .set_state(&target, json!({ "on": true, "bri": bri }))
-                    .await
-                    .map(|()| icon::brightness(percent))
-            }
-            Kind::BrightnessRel => {
-                let steps = settings.brightness_rel.clamp(-50, 50);
-                let increment = (f32::from(steps) * 2.54).round() as i32;
-                let increment = increment.clamp(-254, 254);
-                let applied = if increment == 0 {
-                    Ok(())
-                } else {
+                if settings.is_cycle() {
+                    let levels = settings.effective_brightnesses();
+                    let index = {
+                        let mut instances = self.instances.lock().await;
+                        let state = instances.entry(instance.instance_id.clone()).or_default();
+                        take_index(&mut state.cursor, levels.len())
+                    };
+                    let percent = levels[index];
+                    let bri = settings::percent_to_bri(percent);
                     bridge
-                        .set_state(&target, json!({ "on": true, "bri_inc": increment }))
+                        .set_state(&target, json!({ "on": true, "bri": bri }))
                         .await
-                };
-                applied.map(|()| icon::brightness_relative(steps))
+                        .map(|()| icon::brightness_cycle(percent, index, levels.len()))
+                } else {
+                    let percent = settings.brightness.min(100);
+                    let bri = settings::percent_to_bri(percent);
+                    bridge
+                        .set_state(&target, json!({ "on": true, "bri": bri }))
+                        .await
+                        .map(|()| icon::brightness(percent))
+                }
             }
             Kind::Temperature => {
-                let warmth = settings.temperature.clamp(1, 100);
-                bridge
-                    .set_state(&target, json!({ "on": true, "ct": warmth_to_ct(warmth) }))
-                    .await
-                    .map(|()| icon::temperature(warmth_to_kelvin(warmth)))
+                if settings.is_cycle() {
+                    let steps = settings.effective_temperatures();
+                    let index = {
+                        let mut instances = self.instances.lock().await;
+                        let state = instances.entry(instance.instance_id.clone()).or_default();
+                        take_index(&mut state.cursor, steps.len())
+                    };
+                    let warmth = steps[index];
+                    bridge
+                        .set_state(&target, json!({ "on": true, "ct": warmth_to_ct(warmth) }))
+                        .await
+                        .map(|()| {
+                            icon::temperature_cycle(warmth_to_kelvin(warmth), index, steps.len())
+                        })
+                } else {
+                    let warmth = settings.temperature.clamp(1, 100);
+                    bridge
+                        .set_state(&target, json!({ "on": true, "ct": warmth_to_ct(warmth) }))
+                        .await
+                        .map(|()| icon::temperature(warmth_to_kelvin(warmth)))
+                }
             }
             Kind::Scene => {
-                let scene = settings.scene.trim().to_owned();
-                if scene.is_empty() {
-                    Err(BridgeError::Shape("no scene configured".to_owned()))
+                if settings.is_cycle() {
+                    let seq = settings.effective_scenes();
+                    if seq.is_empty() {
+                        Err(BridgeError::Shape("no scenes configured".to_owned()))
+                    } else {
+                        let index = {
+                            let mut instances = self.instances.lock().await;
+                            let state = instances.entry(instance.instance_id.clone()).or_default();
+                            take_index(&mut state.cursor, seq.len())
+                        };
+                        let scene = seq[index].clone();
+                        bridge
+                            .set_state(&target, json!({ "scene": scene }))
+                            .await
+                            .map(|()| icon::scene_cycle(index, seq.len()))
+                    }
                 } else {
-                    bridge
-                        .set_state(&target, json!({ "scene": scene }))
-                        .await
-                        .map(|()| icon::scene())
+                    let scene = settings.scene.trim().to_owned();
+                    if scene.is_empty() {
+                        Err(BridgeError::Shape("no scene configured".to_owned()))
+                    } else {
+                        bridge
+                            .set_state(&target, json!({ "scene": scene }))
+                            .await
+                            .map(|()| icon::scene())
+                    }
                 }
             }
         };
@@ -261,14 +315,17 @@ impl Core {
         let mut next = settings.clone();
         match kind {
             Kind::Brightness => {
+                if settings.is_cycle() {
+                    return self.press(kind, instance, settings).await;
+                }
                 next.brightness = (i16::from(settings.brightness) + delta).clamp(1, 100) as u8;
             }
             Kind::Temperature => {
+                if settings.is_cycle() {
+                    return self.press(kind, instance, settings).await;
+                }
                 let current = i32::from(settings.temperature);
                 next.temperature = (current + i32::from(delta)).clamp(1, 100) as u16;
-            }
-            Kind::BrightnessRel => {
-                next.brightness_rel = (settings.brightness_rel + delta).clamp(-50, 50);
             }
             _ => return Ok(()),
         }
@@ -498,11 +555,12 @@ macro_rules! declare_actions {
 }
 
 declare_actions! {
-    PowerAction => ("io.github.mario.huecontrol.power", Kind::Power),
+    SwitchAction => ("io.github.mario.huecontrol.switch", Kind::Switch),
+    PowerLegacyAction => ("io.github.mario.huecontrol.power", Kind::Switch),
     ColorAction => ("io.github.mario.huecontrol.color", Kind::Color),
-    CycleAction => ("io.github.mario.huecontrol.cycle", Kind::Cycle),
+    CycleLegacyAction => ("io.github.mario.huecontrol.cycle", Kind::Color),
     BrightnessAction => ("io.github.mario.huecontrol.brightness", Kind::Brightness),
-    BrightnessRelAction => ("io.github.mario.huecontrol.brightness-rel", Kind::BrightnessRel),
+    BrightnessRelLegacyAction => ("io.github.mario.huecontrol.brightness-rel", Kind::Brightness),
     TemperatureAction => ("io.github.mario.huecontrol.temperature", Kind::Temperature),
     SceneAction => ("io.github.mario.huecontrol.scene", Kind::Scene),
 }

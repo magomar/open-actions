@@ -1,6 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" width="72" height="72">
   <rect width="72" height="72" rx="10" fill="#18181b"/>
-  <circle cx="36" cy="36" r="20" fill="none" stroke="#3f3f46" stroke-width="8"/>
-  <path d="M36 16a20 20 0 0 1 17.3 30" fill="none" stroke="#ffd479" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="36" cy="12" r="5" fill="#ffd479"/>
+  <defs>
+    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fde047" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="36" cy="36" r="22" fill="url(#sunGlow)"/>
+  <circle cx="36" cy="36" r="11" fill="#fbbf24"/>
+  <line x1="50.0" y1="36.0" x2="58.0" y2="36.0" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="45.9" y1="45.9" x2="51.6" y2="51.6" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="36.0" y1="50.0" x2="36.0" y2="58.0" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="26.1" y1="45.9" x2="20.4" y2="51.6" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="22.0" y1="36.0" x2="14.0" y2="36.0" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="26.1" y1="26.1" x2="20.4" y2="20.4" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="36.0" y1="22.0" x2="36.0" y2="14.0" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
+  <line x1="45.9" y1="26.1" x2="51.6" y2="20.4" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/>
 </svg>
+

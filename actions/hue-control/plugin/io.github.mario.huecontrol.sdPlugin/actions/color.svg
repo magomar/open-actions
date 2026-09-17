@@ -1,8 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" width="72" height="72">
   <rect width="72" height="72" rx="10" fill="#18181b"/>
-  <circle cx="36" cy="30" r="16" fill="#e0407a"/>
-  <circle cx="28" cy="26" r="9" fill="#f2a03d"/>
-  <circle cx="44" cy="36" r="8" fill="#3fa7e0"/>
-  <rect x="16" y="54" width="40" height="6" rx="3" fill="#3f3f46"/>
-  <rect x="16" y="54" width="26" height="6" rx="3" fill="#ffd479"/>
+  <g transform="translate(36, 37) scale(0.68)">
+    <path d="M-36 -4 C-44 -26 -28 -46 -4 -46 C20 -46 38 -30 38 -10 C38 6 26 20 12 20 C6 20 2 16 0 10 C-2 4 -8 0 -14 0 C-22 0 -28 8 -32 8 C-35 8 -36 4 -36 -4 Z" fill="#27272a" stroke="#e4e4e7" stroke-width="3.5" stroke-linejoin="round"/>
+    <circle cx="16" cy="0" r="5" fill="#e4e4e7"/>
+    <circle cx="-16" cy="-20" r="5.5" fill="#ef4444"/>
+    <circle cx="0" cy="-26" r="5.5" fill="#eab308"/>
+    <circle cx="16" cy="-18" r="5.5" fill="#3b82f6"/>
+    <circle cx="-16" cy="0" r="5.5" fill="#10b981"/>
+  </g>
 </svg>
+

@@ -1,12 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" width="72" height="72">
   <rect width="72" height="72" rx="10" fill="#18181b"/>
-  <g fill="#c084fc">
-    <circle cx="23" cy="26" r="8"/>
-    <circle cx="49" cy="21" r="6"/>
-    <circle cx="38" cy="48" r="9"/>
-  </g>
-  <g fill="#818cf8">
-    <circle cx="52" cy="46" r="6"/>
-    <circle cx="18" cy="46" r="5"/>
-  </g>
+  <defs>
+    <radialGradient id="sceneGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="36" cy="36" r="22" fill="url(#sceneGlow)"/>
+  <path d="M36 18 Q36 30 24 30 Q36 30 36 42 Q36 30 48 30 Q36 30 36 18 Z" fill="#e879f9" stroke="#c084fc" stroke-width="1.8"/>
+  <path d="M51 36 Q51 43 44 43 Q51 43 51 50 Q51 43 58 43 Q51 43 51 36 Z" fill="#e879f9" stroke="#c084fc" stroke-width="1.4"/>
+  <path d="M21 38 Q21 44 15 44 Q21 44 21 50 Q21 44 27 44 Q21 44 21 38 Z" fill="#e879f9" stroke="#c084fc" stroke-width="1.4"/>
 </svg>
+

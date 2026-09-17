@@ -35,19 +35,29 @@ impl GlobalSettings {
 /// Default cycle palette, matching the Elgato plugin's initial triad.
 pub const DEFAULT_COLORS: [&str; 3] = ["#ff0000", "#00ff00", "#0000ff"];
 
-/// Per-instance settings; all seven actions share one shape, as Elgato's plugin does.
+/// Default temperature cycle steps in warmth (1..100): ~2900K, ~4300K, ~5600K.
+pub const DEFAULT_TEMPERATURES: [u16; 3] = [20, 50, 80];
+
+/// Default brightness cycle steps in percent (1..100).
+pub const DEFAULT_BRIGHTNESSES: [u8; 4] = [25, 50, 75, 100];
+
+/// Per-instance settings; all actions share one shape, as Elgato's plugin does.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Settings {
     pub bridge: String,
     pub target: String,
+    pub mode: String,
     pub color: String,
     pub colors: Vec<String>,
     pub brightness: u8,
+    pub brightnesses: Vec<u8>,
     pub scale_ticks: u8,
     pub temperature: u16,
+    pub temperatures: Vec<u16>,
     pub brightness_rel: i16,
     pub scene: String,
+    pub scenes: Vec<String>,
 }
 
 impl Default for Settings {
@@ -55,21 +65,30 @@ impl Default for Settings {
         Self {
             bridge: String::new(),
             target: String::new(),
+            mode: "fixed".to_owned(),
             color: "#ffcc66".to_owned(),
             colors: DEFAULT_COLORS
                 .iter()
                 .map(|color| (*color).to_owned())
                 .collect(),
             brightness: 100,
+            brightnesses: DEFAULT_BRIGHTNESSES.to_vec(),
             scale_ticks: 1,
-            temperature: 366,
+            temperature: 50,
+            temperatures: DEFAULT_TEMPERATURES.to_vec(),
             brightness_rel: 10,
             scene: String::new(),
+            scenes: Vec::new(),
         }
     }
 }
 
 impl Settings {
+    /// Whether the action instance is operating in cycling mode.
+    pub fn is_cycle(&self) -> bool {
+        self.mode.eq_ignore_ascii_case("cycle")
+    }
+
     /// The configured cycle palette, ignoring invalid entries, with a default triad fallback.
     pub fn effective_colors(&self) -> Vec<String> {
         let colors: Vec<String> = self
@@ -85,6 +104,41 @@ impl Settings {
                 .collect()
         } else {
             colors
+        }
+    }
+
+    /// The configured temperature steps (warmth 1..100), with defaults fallback.
+    pub fn effective_temperatures(&self) -> Vec<u16> {
+        let temps: Vec<u16> = self.temperatures.iter().map(|&t| t.clamp(1, 100)).collect();
+        if temps.is_empty() {
+            DEFAULT_TEMPERATURES.to_vec()
+        } else {
+            temps
+        }
+    }
+
+    /// The configured brightness steps (1..100%), with defaults fallback.
+    pub fn effective_brightnesses(&self) -> Vec<u8> {
+        let bris: Vec<u8> = self.brightnesses.iter().map(|&b| b.clamp(1, 100)).collect();
+        if bris.is_empty() {
+            DEFAULT_BRIGHTNESSES.to_vec()
+        } else {
+            bris
+        }
+    }
+
+    /// The configured scene sequence for cycling, filtering out empty IDs.
+    pub fn effective_scenes(&self) -> Vec<String> {
+        let filtered: Vec<String> = self
+            .scenes
+            .iter()
+            .map(|s| s.trim().to_owned())
+            .filter(|s| !s.is_empty())
+            .collect();
+        if filtered.is_empty() && !self.scene.trim().is_empty() {
+            vec![self.scene.trim().to_owned()]
+        } else {
+            filtered
         }
     }
 
@@ -283,8 +337,46 @@ mod tests {
     fn defaults_are_usable_without_inspector_configuration() {
         let settings = Settings::default();
         assert_eq!(settings.effective_colors().len(), 3);
+        assert_eq!(settings.effective_temperatures().len(), 3);
+        assert_eq!(settings.effective_brightnesses().len(), 4);
+        assert_eq!(settings.effective_scenes().len(), 0);
         assert_eq!(settings.tick_scale(), 1);
         assert_eq!(settings.brightness, 100);
+        assert!(!settings.is_cycle());
+    }
+
+    #[test]
+    fn cycle_helpers_filter_and_fallback_properly() {
+        let mut settings = Settings {
+            mode: "cycle".to_owned(),
+            temperatures: vec![],
+            brightnesses: vec![],
+            scenes: vec!["  ".to_owned()],
+            scene: "scene123".to_owned(),
+            ..Settings::default()
+        };
+        assert!(settings.is_cycle());
+        assert_eq!(
+            settings.effective_temperatures(),
+            DEFAULT_TEMPERATURES.to_vec()
+        );
+        assert_eq!(
+            settings.effective_brightnesses(),
+            DEFAULT_BRIGHTNESSES.to_vec()
+        );
+        assert_eq!(settings.effective_scenes(), vec!["scene123".to_owned()]);
+
+        settings.temperatures = vec![150, 0, 45];
+        assert_eq!(settings.effective_temperatures(), vec![100, 1, 45]);
+
+        settings.brightnesses = vec![200, 0, 50];
+        assert_eq!(settings.effective_brightnesses(), vec![100, 1, 50]);
+
+        settings.scenes = vec!["s1".into(), "".into(), "s2".into()];
+        assert_eq!(
+            settings.effective_scenes(),
+            vec!["s1".to_owned(), "s2".to_owned()]
+        );
     }
 
     #[test]

@@ -21,3 +21,10 @@ input:focus, select:focus { outline: 1px solid #61dafb; outline-offset: 0; }
 .swatch { display: flex; align-items: center; gap: 2px; }
 .swatch button { width: 20px; padding: 0; border: 1px solid #4b4b52; border-radius: 3px; color: #d8d8d8; background: #3d3d3d; font: inherit; line-height: 1; cursor: pointer; }
 .swatch button:hover { border-color: #ef4444; color: #fff; }
+.item-list { display: flex; flex-direction: column; gap: 4px; padding: 2px 10px 2px 0; }
+.item-step { display: flex; align-items: center; gap: 6px; width: 100%; }
+.item-step input[type="range"] { flex: 1; }
+.item-step .step-select { flex: 1; min-height: 24px; padding: 2px 4px; border: 1px solid #303030; color: #d8d8d8; background: #3d3d3d; font: inherit; }
+.item-step .step-label { font-size: 8pt; color: #9a9a9a; min-width: 42px; text-align: right; }
+.item-step button { width: 20px; padding: 0; border: 1px solid #4b4b52; border-radius: 3px; color: #d8d8d8; background: #3d3d3d; font: inherit; line-height: 1; cursor: pointer; }
+.item-step button:hover { border-color: #ef4444; color: #fff; }

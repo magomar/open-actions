@@ -8,15 +8,13 @@ The root cause is that the Elgato property inspector issues its bridge requests 
 
 | Action | What it does |
 | :--- | :--- |
-| **On / Off** | Toggles power and reflects the real state on the button. |
-| **Color** | Sets a fixed color from a native color picker. |
-| **Color Cycle** | Steps through a 2–10 color palette, advancing one color per press. |
-| **Brightness** | Sets an absolute brightness (1–100%). |
-| **Brightness Steps** | Nudges brightness by a signed step count (−50…+50). |
-| **Temperature** | Shifts color temperature between warm and cool. |
-| **Scene** | Applies a scene to a group. |
+| **Switch (On/Off)** | Toggles power and reflects the real state on the button. |
+| **Color** | Sets a fixed color or cycles through a 2–10 color palette. |
+| **Brightness** | Sets an absolute brightness (1–100%) or cycles through brightness levels. |
+| **Temperature** | Shifts color temperature (warm/cool) or cycles through temperature presets. |
+| **Scene** | Applies a scene to a group or cycles through a scene sequence. |
 
-Brightness, Brightness Steps, and Temperature also work on encoders: rotate the dial to adjust the value, press it to toggle power.
+Brightness and Temperature also work on encoders: rotate the dial to adjust the value, press it to toggle power. In cycling mode, rotating detents steps through the cycle sequence.
 
 ## Build
 

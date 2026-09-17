@@ -2,7 +2,7 @@
 type: Feature Spec
 template: feature
 title: "Hue Control"
-description: "A native OpenAction plugin that controls Philips Hue lights over the Bridge local API — on/off, color, color cycle, brightness, temperature, and scenes."
+description: "A native OpenAction plugin that controls Philips Hue lights over the Bridge local API — Switch, Color, Temperature, Brightness, and Scene (with fixed and cycling modes)."
 status: implemented
 created: 2026-09-16
 generated: { by: agent/vulcan, at: 2026-09-16T18:35:00Z }
@@ -11,7 +11,7 @@ verified: { by: agent/vulcan, at: 2026-09-16T21:20:00Z }
 
 # Feature Spec: Hue Control 🌈
 
-A native OpenAction plugin for OpenDeck that controls Philips Hue lights and rooms through the Hue Bridge **local API** (`http://<bridge-ip>/api/<username>`). It replicates the action set of Elgato's official Philips Hue plugin — On/Off, Color, Color Cycle, Brightness, Brightness Relative, Temperature, and Scene — but is built on the OpenAction crate and our own Svelte property inspector, so every action's configuration UI actually renders and functions under OpenDeck (the Elgato plugin's property inspector only shows Bridge and Light, leaving color/cycle/scene controls unusable).
+A native OpenAction plugin for OpenDeck that controls Philips Hue lights and rooms through the Hue Bridge **local API** (`http://<bridge-ip>/api/<username>`). It provides a streamlined action set — Switch (On/Off), Color (fixed & cycling), Temperature (fixed & cycling), Brightness (fixed & cycling), and Scene (fixed & cycling) — built on the OpenAction crate and our own Svelte property inspector, ensuring every action's configuration UI actually renders and functions under OpenDeck.
 
 The problem it solves: Mario's Hue Play lights and room groups are unreachable from the stream deck beyond a bare on/off toggle. This action makes the full Hue feature set available from the pad, with a property inspector that lists real bridges, lights, groups, and scenes discovered from the Bridge itself.
 
@@ -24,19 +24,20 @@ The problem it solves: Mario's Hue Play lights and room groups are unreachable f
 - **Pairing flow**: after choosing a bridge, the inspector shows a "Press the bridge link button, then Pair" control. Pairing sends `POST /api` with `{"devicetype":"open-actions#hue-control"}`; on success the returned username is persisted to **global settings** and reused by every action (one credential per bridge).
 - **Target section**: a `<select>` grouped into **Groups** then **Lights**, populated from the selected bridge. Groups are listed first because scenes apply to groups.
 - **Action-specific controls**, revealed once a target is chosen:
-  - *On/Off* — none beyond target.
-  - *Color* — an `<input type="color">`.
-  - *Color Cycle* — a list of color pickers with `+` / `−` buttons (2–10 colors); each press advances one step.
-  - *Brightness* / *Temperature* — range sliders, plus a "scale ticks" selector when the instance is bound to an encoder dial.
-  - *Brightness Relative* — a −50…+50 step slider.
-  - *Scene* — a `<select>` of scenes belonging to the selected group.
+  - *Switch (On/Off)* — none beyond target.
+  - *Color* — a **Mode** selector (Fixed / Cycle). Fixed shows an `<input type="color">`; Cycle shows a list of color pickers with `+` / `−` buttons (2–10 colors).
+  - *Temperature* — a **Mode** selector (Fixed / Cycle). Fixed shows a warmth range slider (1–100); Cycle shows a list of temperature steps with `+` / `−` buttons (2–10 steps). Both offer a "scale ticks" selector when bound to an encoder dial.
+  - *Brightness* — a **Mode** selector (Fixed / Cycle). Fixed shows a brightness percentage slider (1–100); Cycle shows a list of percentage steps with `+` / `−` buttons (2–10 steps). Both offer a "scale ticks" selector when bound to an encoder dial.
+  - *Scene* — a **Mode** selector (Fixed / Cycle). Fixed shows a `<select>` of scenes for the group; Cycle shows an ordered sequence of scene dropdowns with `+` / `−` buttons (2–10 scenes).
 - The inspector requests bridge/target/scene data from the plugin via `sendToPlugin`; the plugin replies with `sendToPropertyInspector`, so all network access happens in Rust (the PI webview performs no cross-origin fetches).
 
 ### Button (device face)
 - Each action renders an SVG data-URI image (matching the sibling actions' convention of generating SVG in Rust and base64-encoding it).
-- *On/Off*: filled icon when on, dimmed icon when off.
-- *Brightness*: numeric percentage ring; *Temperature*: warm→cool gradient swatch.
-- *Color / Color Cycle*: a swatch of the currently selected color.
+- *Switch (On/Off)*: luminous glowing bulb with ambient aura and green indicator when on, dimmed graphite bulb when off.
+- *Brightness*: radiant sun glyph with an integrated circular halo dial gauge (0–100%) and percentage readout below.
+- *Temperature*: thermometer glyph with dynamic mercury height and Kelvin-matched color glow, with Kelvin readout below.
+- *Color*: artist palette glyph featuring a luminous active color gem with ambient glow, and hex readout below.
+- *Scene*: ambient violet/fuchsia sparkles constellation with scene label below.
 - Errors (bridge unreachable, unknown target, unauthorized username) show `showAlert` and a descriptive on-button label.
 
 ### Encoder / dial
@@ -84,13 +85,17 @@ Per-action settings (one object per instance):
 {
   "bridge": "001788fffe7a9abf",
   "target": "g-81",
+  "mode": "fixed",
   "color": "#ff0000",
   "colors": ["#ff0000", "#00ff00", "#0000ff"],
   "brightness": 100,
+  "brightnesses": [25, 50, 75, 100],
   "scale_ticks": 1,
-  "temperature": 366,
+  "temperature": 50,
+  "temperatures": [20, 50, 80],
   "brightness_rel": 10,
-  "scene": "<scene-id>"
+  "scene": "<scene-id>",
+  "scenes": ["<scene-id-1>", "<scene-id-2>"]
 }
 ```
 
@@ -134,24 +139,39 @@ Target encoding: `g-<group-id>` selects a group; `l-<light-id>` selects an indiv
   - [ ] **And** once the link button is pressed, the plugin stores `{ip, username}` in global settings and the inspector lists the bridge's groups and lights
 
 - **Scenario: Toggle a group on and off**
-  - [x] **Given** an On/Off action configured to a reachable group
+  - [x] **Given** a Switch action configured to a reachable group
   - [x] **When** the user presses the button
   - [x] **Then** the group's lights change state and the button image reflects the new on/off state
 
 - **Scenario: Color cycle advances one step per press**
-  - [x] **Given** a Color Cycle action configured to a group with colors `[red, green, blue]`
+  - [x] **Given** a Color action in cycle mode configured to a group with colors `[red, green, blue]`
   - [x] **When** the user presses the button three times
   - [x] **Then** the group is set to red, then green, then blue, and the fourth press wraps back to red
 
+- **Scenario: Temperature cycle advances one step per press**
+  - [x] **Given** a Temperature action in cycle mode configured to a group with temperatures `[20, 50, 80]`
+  - [x] **When** the user presses the button three times
+  - [x] **Then** the group is set to temperature 20, then 50, then 80, and the fourth press wraps back to 20
+
 - **Scenario: Brightness sets an absolute level**
-  - [x] **Given** a Brightness action configured to 40%
+  - [x] **Given** a Brightness action in fixed mode configured to 40%
   - [x] **When** the user presses the button
   - [x] **Then** the target is turned on and set to brightness 102/254 (`40% × 2.54`)
 
+- **Scenario: Brightness cycle advances one step per press**
+  - [x] **Given** a Brightness action in cycle mode configured to levels `[25, 50, 75, 100]`
+  - [x] **When** the user presses the button four times
+  - [x] **Then** the target cycles through each level and wraps back to 25%
+
 - **Scenario: Scene applies to its group**
-  - [x] **Given** a Scene action configured to a group and one of its scenes
+  - [x] **Given** a Scene action in fixed mode configured to a group and one of its scenes
   - [x] **When** the user presses the button
   - [x] **Then** the plugin applies that scene to the group via `groups/<id>/action`
+
+- **Scenario: Scene cycle advances one step per press**
+  - [x] **Given** a Scene action in cycle mode configured to a group and scene sequence `[sceneA, sceneB]`
+  - [x] **When** the user presses the button twice
+  - [x] **Then** sceneA is applied, then sceneB, and the third press wraps back to sceneA
 
 - **Scenario: Unreachable bridge surfaces an alert**
   - [x] **Given** an action whose configured bridge IP is unreachable
@@ -169,7 +189,7 @@ Target encoding: `g-<group-id>` selects a group; `l-<light-id>` selects an indiv
 
 ### Created/Modified Files
 *Paths below are relative to the action directory `actions/hue-control/`.*
-- `[x]` `src/main.rs` → registers the seven actions and dispatches key/dial events.
+- `[x]` `src/main.rs` → registers the consolidated actions and dispatches key/dial events.
 - `[x]` `src/bridge.rs` → Hue Bridge client: discovery, pairing, target listing, and state changes over the local API.
 - `[x]` `src/settings.rs` → global (bridge credentials) and per-action settings types, plus target encoding.
 - `[x]` `src/icon.rs` → SVG data-URI rendering for each action's button state.
