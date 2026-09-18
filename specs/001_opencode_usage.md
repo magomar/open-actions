@@ -52,10 +52,17 @@ The endpoint returns `usage.rolling`, `usage.weekly`, and `usage.monthly`; each 
 ### Deferred metric
 - `zen_credits` is out of scope until OpenCode publishes a key-authenticated balance endpoint. See [anomalyco/opencode#10448](https://github.com/anomalyco/opencode/issues/10448).
 
-### Action settings (persisted)
+### Global settings (plugin-wide shared state)
 ```json
 {
-  "api_key": "OpenCode Go API key",
+  "api_key": "OpenCode Go API key"
+}
+```
+
+### Action settings (persisted per instance)
+```json
+{
+  "api_key": "optional instance override / legacy fallback",
   "display_mode": "fixed | cycle_manual | cycle_periodic",
   "fixed_metric": "go_5h | go_weekly | go_monthly",
   "cycle_interval_seconds": 300
@@ -66,7 +73,7 @@ The endpoint returns `usage.rolling`, `usage.weekly`, and `usage.monthly`; each 
 
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
 
-- The API key is stored in the action's persisted settings only; it is never logged or rendered on the button.
+- The API key is stored in plugin-wide global settings (or optional instance settings override); it is never logged or rendered on the button.
 - Failure to authenticate (invalid/expired key) surfaces a visible error state on the button (e.g. `!`) rather than silently showing stale or empty data.
 
 ---
@@ -78,6 +85,11 @@ The endpoint returns `usage.rolling`, `usage.weekly`, and `usage.monthly`; each 
 - Property-inspector tests (if any): `npm test`
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
+
+- **Scenario: Shared API key configures multiple actions without re-entry**
+  - [ ] **Given** multiple OpenCode Usage buttons on the device and an API key configured once in global settings
+  - [ ] **When** each button appears or refreshes
+  - [ ] **Then** every button accesses the shared API key and renders its respective metric without requiring individual key configuration
 
 - **Scenario: Fixed metric displays the configured value**
   - [ ] **Given** a configured action with `display_mode = fixed` and `fixed_metric = go_monthly`

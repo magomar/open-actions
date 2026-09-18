@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { actionSettings } from "@openaction/svelte-pi";
+  import { actionSettings, globalSettings } from "@openaction/svelte-pi";
 
   type Metric = "go_5h" | "go_weekly" | "go_monthly";
   type DisplayMode = "fixed" | "cycle_manual" | "cycle_periodic";
@@ -10,6 +10,26 @@
     fixed_metric: "go_5h" as Metric,
     cycle_interval_seconds: 300,
   };
+
+  const apiKey = $derived($globalSettings?.api_key ?? $actionSettings?.api_key ?? "");
+
+  // Auto-migrate legacy per-instance API key to global settings if global is unset
+  $effect(() => {
+    if ($actionSettings?.api_key && !$globalSettings?.api_key) {
+      globalSettings.update((saved: any) => ({
+        ...saved,
+        api_key: $actionSettings.api_key,
+      }));
+      actionSettings.update((saved: any) => ({ ...saved, api_key: "" }));
+    }
+  });
+
+  function updateApiKey(value: string) {
+    globalSettings.update((saved: any) => ({ ...saved, api_key: value }));
+    if ($actionSettings?.api_key) {
+      actionSettings.update((saved: any) => ({ ...saved, api_key: "" }));
+    }
+  }
 
   function update(key: keyof typeof defaults, value: unknown) {
     actionSettings.update((saved) => ({ ...defaults, ...saved, [key]: value }));
@@ -26,8 +46,16 @@
 <main class="sdpi-wrapper">
   <div class="sdpi-item">
     <label class="sdpi-item-label" for="api-key">API key</label>
-    <input class="sdpi-item-value" id="api-key" type="password" value={$actionSettings.api_key ?? ""} oninput={(event) => update("api_key", event.currentTarget.value)} />
+    <input
+      class="sdpi-item-value"
+      id="api-key"
+      type="password"
+      value={apiKey}
+      placeholder="Bearer API key"
+      oninput={(event) => updateApiKey(event.currentTarget.value)}
+    />
   </div>
+  <p class="sdpi-note">API key is saved globally and shared across all OpenCode actions.</p>
   <div class="sdpi-item">
     <label class="sdpi-item-label" for="display-mode">Display mode</label>
     <select class="sdpi-item-value" id="display-mode" value={$actionSettings.display_mode ?? defaults.display_mode} onchange={(event) => update("display_mode", event.currentTarget.value as DisplayMode)}>

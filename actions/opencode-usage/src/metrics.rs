@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 pub const USAGE_URL: &str = "https://opencode.ai/zen/go/v1/usage";
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Metric {
     #[default]
@@ -25,19 +25,19 @@ impl Metric {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct UsageResponse {
     pub usage: UsageWindows,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct UsageWindows {
     pub rolling: UsageWindow,
     pub weekly: UsageWindow,
     pub monthly: UsageWindow,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct UsageWindow {
     pub percent: u8,
 }
