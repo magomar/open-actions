@@ -1,0 +1,29 @@
+{
+  "Name": "Fleet Monitor",
+  "Author": "mario",
+  "Version": "0.1.0",
+  "Category": "Fleet",
+  "Icon": "icon",
+  "OS": [{ "Platform": "linux" }, { "Platform": "mac" }],
+  "CodePathLin": "fleet-monitor",
+  "CodePathMac": "fleet-monitor",
+  "PropertyInspectorPath": "pi/index.html",
+  "Actions": [
+    {
+      "UUID": "io.github.mario.fleet.global",
+      "Name": "Fleet Global",
+      "Icon": "actions/global",
+      "Tooltip": "Display fleet health counts (Clean, Ready, InProgress, Blocked) and cycle monitored projects",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.fleet.project",
+      "Name": "Fleet Project",
+      "Icon": "actions/project",
+      "Tooltip": "Display detailed metrics and state clues for a Keel project (linked or fixed)",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    }
+  ]
+}

@@ -3,15 +3,15 @@ set -eu
 
 cd "$(dirname "$0")/.."
 cargo build --release
-cp target/release/handy-transcribe plugin/io.github.mario.handytranscribe.sdPlugin/handy-transcribe
-chmod +x plugin/io.github.mario.handytranscribe.sdPlugin/handy-transcribe
-(cd pi && npm run build)
+cp target/release/fleet-monitor plugin/io.github.mario.fleetmonitor.sdPlugin/fleet-monitor
+chmod +x plugin/io.github.mario.fleetmonitor.sdPlugin/fleet-monitor
+(cd pi && bun run build)
 
-BUNDLE=plugin/io.github.mario.handytranscribe.sdPlugin
+BUNDLE=plugin/io.github.mario.fleetmonitor.sdPlugin
 VERSION=$(sed -n 's/.*"Version": *"\([^"]*\)".*/\1/p' "$BUNDLE/manifest.json")
-ZIP="plugin/handy-transcribe-$VERSION.zip"
+ZIP="plugin/fleet-monitor-$VERSION.zip"
 
-rm -f plugin/handy-transcribe-*.zip
+rm -f plugin/fleet-monitor-*.zip
 python3 - "$BUNDLE" "$ZIP" <<'PY'
 import pathlib, sys, zipfile
 

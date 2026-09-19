@@ -13,11 +13,12 @@ tags: [constitution, roadmap, milestones, planning]
 Each milestone maps to one action directory under `actions/<name>/` and one numbered spec under `specs/`.
 
 ### Phase 1: Core Essentials (Priority: High)
-- `[ ]` **[OpenCode Usage](../001_opencode_usage.md)** (`actions/opencode-usage/`): Display OpenCode Go 5-hour, weekly, or monthly usage on a device button — fixed metric or cycling (manual/periodic).
+- `[x]` **[OpenCode Usage](../001_opencode_usage.md)** (`actions/opencode-usage/`): Display OpenCode Go 5-hour, weekly, or monthly usage on a device button — fixed metric or cycling (manual/periodic).
 
 ### Phase 2: Power Utilities (Priority: Medium)
-- `[ ]` **[Handy Transcribe](../002_handy_transcribe.md)** (`actions/handy-transcribe/`): Toggle Handy dictation from a button via its remote-control CLI, with optimistic recording feedback on the icon.
+- `[x]` **[Handy Transcribe](../002_handy_transcribe.md)** (`actions/handy-transcribe/`): Toggle Handy dictation from a button via its remote-control CLI, with optimistic recording feedback on the icon.
 - `[x]` **[Hue Control](../003_hue_control.md)** (`actions/hue-control/`): Control Philips Hue lights and rooms from the pad over the Bridge local API — On/Off, Color, Color Cycle, Brightness, Brightness Relative, Temperature, and Scene — replacing the partially working Elgato plugin.
+- `[x]` **[Fleet Monitor](../004_fleet_monitor.md)** (`actions/fleet-monitor/`): Monitor multi-workspace Keel fleets, 4-state project health, cooperative cycling, and independent project views on device keys.
 
 ### Phase 3: Growth & Engagement (Priority: Low)
 - *(None scheduled.)*

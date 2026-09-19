@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Handy Transcribe"
 description: "A device action that toggles Handy transcription on a button."
-status: draft
+status: implemented
 created: 2026-09-15
 ---
 
@@ -64,24 +64,24 @@ The binary path is resolved as: configured value, if non-empty; otherwise a per-
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Button toggles Handy transcription**
-  - [ ] **Given** Handy is installed and running with `handy` on PATH
-  - [ ] **When** the user presses the button
-  - [ ] **Then** Handy starts recording and the icon shows the teal recording state
+  - [x] **Given** Handy is installed and running with `handy` on PATH
+  - [x] **When** the user presses the button
+  - [x] **Then** Handy starts recording and the icon shows the teal recording state
 
 - **Scenario: Second press stops recording**
-  - [ ] **Given** the button is in the recording state
-  - [ ] **When** the user presses the button again
-  - [ ] **Then** Handy stops recording and the icon returns to the idle pink state
+  - [x] **Given** the button is in the recording state
+  - [x] **When** the user presses the button again
+  - [x] **Then** Handy stops recording and the icon returns to the idle pink state
 
 - **Scenario: Missing binary surfaces an error**
-  - [ ] **Given** the configured Handy binary path does not exist
-  - [ ] **When** the user presses the button
-  - [ ] **Then** the button shows an alert and remains in the idle state
+  - [x] **Given** the configured Handy binary path does not exist
+  - [x] **When** the user presses the button
+  - [x] **Then** the button shows an alert and remains in the idle state
 
 - **Scenario: Empty path auto-detects the binary**
-  - [ ] **Given** `handy_binary_path` is empty
-  - [ ] **When** the action resolves the binary
-  - [ ] **Then** it uses the macOS app bundle path on macOS, or `handy` on PATH elsewhere
+  - [x] **Given** `handy_binary_path` is empty
+  - [x] **When** the action resolves the binary
+  - [x] **Then** it uses the macOS app bundle path on macOS, or `handy` on PATH elsewhere
 
 ---
 
@@ -89,11 +89,11 @@ The binary path is resolved as: configured value, if non-empty; otherwise a per-
 
 ### Created/Modified Files
 *Paths below are relative to the action directory `actions/handy-transcribe/`.*
-- `[ ]` `src/main.rs` -> Rust OpenAction client: action registration, event handling, optimistic toggle state.
-- `[ ]` `src/handy.rs` -> binary-path resolution, toggle command construction, idle/recording icon rendering.
-- `[ ]` `pi/` -> Svelte property inspector for the Handy binary path.
-- `[ ]` `plugin/` -> manifest, pink-hand icon, and action asset.
-- `[ ]` `scripts/package.sh`, `README.md` -> build/install instructions.
+- [x] `src/main.rs` -> Rust OpenAction client: action registration, event handling, optimistic toggle state.
+- [x] `src/handy.rs` -> binary-path resolution, toggle command construction, idle/recording icon rendering.
+- [x] `pi/` -> Svelte property inspector for the Handy binary path.
+- [x] `plugin/` -> manifest, pink-hand icon, and action asset.
+- [x] `scripts/package.sh`, `README.md` -> build/install instructions.
 
 ### Verification Assertions
 - `src/handy.rs` references `specs/002_handy_transcribe.md` in its header comment.

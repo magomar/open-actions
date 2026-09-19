@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "OpenCode Usage"
 description: "A device action that surfaces OpenCode Go usage telemetry on a button."
-status: draft
+status: implemented
 created: 2026-09-14
 ---
 
@@ -87,34 +87,34 @@ The endpoint returns `usage.rolling`, `usage.weekly`, and `usage.monthly`; each 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Shared API key configures multiple actions without re-entry**
-  - [ ] **Given** multiple OpenCode Usage buttons on the device and an API key configured once in global settings
-  - [ ] **When** each button appears or refreshes
-  - [ ] **Then** every button accesses the shared API key and renders its respective metric without requiring individual key configuration
+  - [x] **Given** multiple OpenCode Usage buttons on the device and an API key configured once in global settings
+  - [x] **When** each button appears or refreshes
+  - [x] **Then** every button accesses the shared API key and renders its respective metric without requiring individual key configuration
 
 - **Scenario: Fixed metric displays the configured value**
-  - [ ] **Given** a configured action with `display_mode = fixed` and `fixed_metric = go_monthly`
-  - [ ] **When** the action is added to a button and the API key is valid
-  - [ ] **Then** the button shows the current monthly Go usage percentage, updated on refresh
+  - [x] **Given** a configured action with `display_mode = fixed` and `fixed_metric = go_monthly`
+  - [x] **When** the action is added to a button and the API key is valid
+  - [x] **Then** the button shows the current monthly Go usage percentage, updated on refresh
 
 - **Scenario: Manual cycling advances on press**
-  - [ ] **Given** a configured action with `display_mode = cycle_manual`
-  - [ ] **When** the user presses the button
-  - [ ] **Then** the button advances to the next metric in `cycle_metrics` (wrapping from the last back to the first)
+  - [x] **Given** a configured action with `display_mode = cycle_manual`
+  - [x] **When** the user presses the button
+  - [x] **Then** the button advances to the next metric in `cycle_metrics` (wrapping from the last back to the first)
 
 - **Scenario: Periodic cycling advances on interval**
-  - [ ] **Given** a configured action with `display_mode = cycle_periodic` and `cycle_interval_seconds = 300`
-  - [ ] **When** 5 minutes elapse
-  - [ ] **Then** the button advances to the next metric without user input
+  - [x] **Given** a configured action with `display_mode = cycle_periodic` and `cycle_interval_seconds = 300`
+  - [x] **When** 5 minutes elapse
+  - [x] **Then** the button advances to the next metric without user input
 
 - **Scenario: Invalid API key shows an error state**
-  - [ ] **Given** an action configured with an invalid or expired API key
-  - [ ] **When** the action attempts to refresh
-  - [ ] **Then** the button shows an error indicator and does not display stale or fabricated values
+  - [x] **Given** an action configured with an invalid or expired API key
+  - [x] **When** the action attempts to refresh
+  - [x] **Then** the button shows an error indicator and does not display stale or fabricated values
 
 - **Scenario: Zen balance is deferred safely**
-  - [ ] **Given** OpenCode Zen has no key-authenticated balance endpoint
-  - [ ] **When** the user configures this version of the action
-  - [ ] **Then** no Zen-credit display option is offered and the action performs no dashboard scraping
+  - [x] **Given** OpenCode Zen has no key-authenticated balance endpoint
+  - [x] **When** the user configures this version of the action
+  - [x] **Then** no Zen-credit display option is offered and the action performs no dashboard scraping
 
 ---
 
@@ -122,9 +122,9 @@ The endpoint returns `usage.rolling`, `usage.weekly`, and `usage.monthly`; each 
 
 ### Created/Modified Files
 *Paths below are relative to the action directory `actions/opencode-usage/`.*
-- `[ ]` `src/` -> Rust OpenAction client: action registration, event handling, metric fetching.
-- `[ ]` `src/metrics.rs` -> Go metric model, fetch + display-mode/cycle logic.
-- `[ ]` `pi/` -> Svelte property inspector for API key, display mode, and interval configuration.
+- [x] `src/` -> Rust OpenAction client: action registration, event handling, metric fetching.
+- [x] `src/metrics.rs` -> Go metric model, fetch + display-mode/cycle logic.
+- [x] `pi/` -> Svelte property inspector for API key, display mode, and interval configuration.
 
 ### Verification Assertions
 - `src/metrics.rs` references `specs/001_opencode_usage.md` in its header comment.

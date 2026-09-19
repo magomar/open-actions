@@ -9,6 +9,7 @@ A monorepo of custom [OpenAction](https://github.com/OpenActionAPI) plugins ("ac
 | **OpenCode Usage** | [`actions/opencode-usage/`](actions/opencode-usage/) | Surface OpenCode Go 5-hour, weekly, or monthly usage on a button. |
 | **Handy Transcribe** | [`actions/handy-transcribe/`](actions/handy-transcribe/) | Toggle [Handy](https://handy.computer) dictation from a button via its remote-control CLI, with an idle/recording icon state. |
 | **Hue Control** | [`actions/hue-control/`](actions/hue-control/) | Control Philips Hue lights and rooms over the Bridge local API: switch, color, brightness, temperature, and scenes (fixed and cycling modes). |
+| **Fleet Monitor** | [`actions/fleet-monitor/`](actions/fleet-monitor/) | Monitor multi-workspace Keel fleets, 4-state project health, cooperative cycling, and independent project views on device keys. |
 
 ## Repository Layout
 
