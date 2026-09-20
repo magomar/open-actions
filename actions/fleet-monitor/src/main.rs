@@ -144,12 +144,14 @@ impl Core {
         instance: &Instance,
         _settings: &GlobalActionSettings,
     ) -> OpenActionResult<()> {
+        eprintln!("[fleet-monitor] global_press received for instance={}", instance.instance_id);
         let is_running = self.state.read().await.is_running;
 
         if !is_running {
             // Fleet is closed -> launch it
+            eprintln!("[fleet-monitor] Fleet is not running -> triggering launch_fleet()");
             if let Err(e) = launch_fleet() {
-                eprintln!("fleet-monitor: launch failed: {e}");
+                eprintln!("[fleet-monitor] launch failed: {e}");
                 let _ = instance.show_alert().await;
             }
             tokio::time::sleep(Duration::from_millis(500)).await;
@@ -158,6 +160,7 @@ impl Core {
         }
 
         // Fleet is running -> refresh telemetry
+        eprintln!("[fleet-monitor] Fleet is running -> refreshing telemetry");
         self.refresh().await;
         Ok(())
     }
@@ -168,11 +171,13 @@ impl Core {
         instance: &Instance,
         settings: &ProjectActionSettings,
     ) -> OpenActionResult<()> {
+        eprintln!("[fleet-monitor] project_press received for instance={}", instance.instance_id);
         let is_running = self.state.read().await.is_running;
 
         if !is_running {
+            eprintln!("[fleet-monitor] Fleet is not running -> triggering launch_fleet()");
             if let Err(e) = launch_fleet() {
-                eprintln!("fleet-monitor: launch failed: {e}");
+                eprintln!("[fleet-monitor] launch failed: {e}");
                 let _ = instance.show_alert().await;
             }
             tokio::time::sleep(Duration::from_millis(500)).await;
@@ -292,6 +297,14 @@ impl Action for FleetGlobalAction {
         self.core.global_press(instance, settings).await
     }
 
+    async fn key_up(
+        &self,
+        instance: &Instance,
+        settings: &Self::Settings,
+    ) -> OpenActionResult<()> {
+        self.core.global_press(instance, settings).await
+    }
+
     async fn did_receive_settings(
         &self,
         instance: &Instance,
@@ -361,6 +374,14 @@ impl Action for FleetProjectAction {
     }
 
     async fn key_down(
+        &self,
+        instance: &Instance,
+        settings: &Self::Settings,
+    ) -> OpenActionResult<()> {
+        self.core.project_press(instance, settings).await
+    }
+
+    async fn key_up(
         &self,
         instance: &Instance,
         settings: &Self::Settings,
