@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Antigravity Usage"
 description: "A device action that surfaces Google Antigravity model quota and credit telemetry on a button."
-status: approved
+status: implemented
 created: 2026-09-20
 generated: { by: agent/antigravity, at: 2026-09-20T08:40:55Z }
 ---
@@ -129,29 +129,29 @@ The action queries the local Antigravity Language Server on `127.0.0.1` via HTTP
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Zero-config auto-discovery retrieves live quota**
-  - [ ] **Given** Antigravity is running with its Language Server on localhost
-  - [ ] **When** the Antigravity Usage action is added to a button
-  - [ ] **Then** the plugin automatically detects the port and CSRF token, queries `GetUserStatus`, and renders Gemini quota on the button tile
+  - [x] **Given** Antigravity is running with its Language Server on localhost
+  - [x] **When** the Antigravity Usage action is added to a button
+  - [x] **Then** the plugin automatically detects the port and CSRF token, queries `GetUserStatus`, and renders Gemini quota on the button tile
 
 - **Scenario: Fixed metric displays configured pool**
-  - [ ] **Given** an action configured with `display_mode = fixed` and `fixed_metric = claude_quota`
-  - [ ] **When** telemetry is fetched
-  - [ ] **Then** the button shows the Claude pool label, remaining percentage, progress bar, and reset countdown
+  - [x] **Given** an action configured with `display_mode = fixed` and `fixed_metric = claude_quota`
+  - [x] **When** telemetry is fetched
+  - [x] **Then** the button shows the Claude pool label, remaining percentage, progress bar, and reset countdown
 
 - **Scenario: Manual cycling advances and refreshes on press**
-  - [ ] **Given** an action configured with `display_mode = cycle_manual`
-  - [ ] **When** the user presses the button
-  - [ ] **Then** the displayed metric cycles to the next item (Gemini -> Claude -> Credits -> Flow -> Gemini) and performs a fresh telemetry poll
+  - [x] **Given** an action configured with `display_mode = cycle_manual`
+  - [x] **When** the user presses the button
+  - [x] **Then** the displayed metric cycles to the next item (Gemini -> Claude -> Credits -> Flow -> Gemini) and performs a fresh telemetry poll
 
 - **Scenario: Periodic cycling advances automatically**
-  - [ ] **Given** an action configured with `display_mode = cycle_periodic` and `cycle_interval_seconds = 300`
-  - [ ] **When** 5 minutes elapse
-  - [ ] **Then** the button advances to the next metric in sequence without user intervention
+  - [x] **Given** an action configured with `display_mode = cycle_periodic` and `cycle_interval_seconds = 300`
+  - [x] **When** 5 minutes elapse
+  - [x] **Then** the button advances to the next metric in sequence without user intervention
 
 - **Scenario: Offline handling when Antigravity is closed**
-  - [ ] **Given** Antigravity is not running on the system
-  - [ ] **When** the plugin attempts discovery or refresh
-  - [ ] **Then** the button displays an "Offline" badge and gracefully retries on subsequent polls without crashing
+  - [x] **Given** Antigravity is not running on the system
+  - [x] **When** the plugin attempts discovery or refresh
+  - [x] **Then** the button displays an "Offline" badge and gracefully retries on subsequent polls without crashing
 
 ---
 
@@ -159,12 +159,12 @@ The action queries the local Antigravity Language Server on `127.0.0.1` via HTTP
 
 ### Created/Modified Files
 *Paths relative to `actions/antigravity-usage/`.*
-- [ ] `src/discovery.rs` -> Process finder and port/CSRF detection for Antigravity language server.
-- [ ] `src/metrics.rs` -> Data models, quota computation, and SVG button rendering.
-- [ ] `src/main.rs` -> OpenAction client registration, settings handling, cycling loops.
-- [ ] `pi/src/App.svelte` -> Svelte Property Inspector for display modes, metrics, and overrides.
-- [ ] `plugin/io.github.mario.antigravityusage.sdPlugin/manifest.json` -> Action definition and manifest.
-- [ ] `scripts/package.sh` -> Release packaging script.
+- [x] `src/discovery.rs` -> Process finder and port/CSRF detection for Antigravity language server.
+- [x] `src/metrics.rs` -> Data models, quota computation, and SVG button rendering.
+- [x] `src/main.rs` -> OpenAction client registration, settings handling, cycling loops.
+- [x] `pi/src/App.svelte` -> Svelte Property Inspector for display modes, metrics, and overrides.
+- [x] `plugin/io.github.mario.antigravityusage.sdPlugin/manifest.json` -> Action definition and manifest.
+- [x] `scripts/package.sh` -> Release packaging script.
 
 ### Verification Assertions
 - `src/metrics.rs` references `specs/005_antigravity_usage.md` in its header comment.
