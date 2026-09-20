@@ -335,7 +335,7 @@ pub fn render_image(display: &MetricDisplay) -> String {
 
 pub fn render_status(title: &str, subtitle: &str) -> String {
     let svg = format!(
-        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><rect width="144" height="144" rx="20" fill="#18181b"/><text x="72" y="60" fill="#ef4444" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="700" text-anchor="middle">{title}</text><text x="72" y="94" fill="#a1a1aa" font-family="system-ui,-apple-system,sans-serif" font-size="16" font-weight="600" text-anchor="middle">{subtitle}</text></svg>"##
+        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><rect width="144" height="144" rx="20" fill="#18181b"/><g transform="translate(56, 16) scale(0.32)"><path d="M85.2843 88.0301C90.1329 91.6664 97.4057 89.2422 90.7389 82.5755C70.7389 63.1816 74.9813 9.84827 50.1329 9.84827C25.2843 9.84827 29.5267 63.1816 9.52673 82.5755C2.25402 89.8483 10.1328 91.6664 14.9813 88.0301C33.7692 75.3028 32.5571 52.8786 50.1329 52.8786C67.7086 52.8786 66.4965 75.3028 85.2843 88.0301Z" fill="#52525b"/></g><text x="72" y="76" fill="#ef4444" font-family="system-ui,-apple-system,sans-serif" font-size="20" font-weight="700" text-anchor="middle">{title}</text><text x="72" y="104" fill="#a1a1aa" font-family="system-ui,-apple-system,sans-serif" font-size="15" font-weight="600" text-anchor="middle">{subtitle}</text></svg>"##
     );
     format!("data:image/svg+xml;base64,{}", base64(svg.as_bytes()))
 }
