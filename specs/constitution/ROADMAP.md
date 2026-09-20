@@ -14,6 +14,7 @@ Each milestone maps to one action directory under `actions/<name>/` and one numb
 
 ### Phase 1: Core Essentials (Priority: High)
 - `[x]` **[OpenCode Usage](../001_opencode_usage.md)** (`actions/opencode-usage/`): Display OpenCode Go 5-hour, weekly, or monthly usage on a device button — fixed metric or cycling (manual/periodic).
+- `[ ]` **[Antigravity Usage](../005_antigravity_usage.md)** (`actions/antigravity-usage/`): Display Google Antigravity compute quota (Gemini and Claude pools, prompt/flow credits, reset countdowns) on a device button — fixed metric or cycling (manual/periodic).
 
 ### Phase 2: Power Utilities (Priority: Medium)
 - `[x]` **[Handy Transcribe](../002_handy_transcribe.md)** (`actions/handy-transcribe/`): Toggle Handy dictation from a button via its remote-control CLI, with optimistic recording feedback on the icon.
