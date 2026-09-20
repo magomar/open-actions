@@ -1,10 +1,5 @@
 // specs/005_antigravity_usage.md
-use std::{
-    collections::HashSet,
-    fs,
-    path::PathBuf,
-    time::Duration,
-};
+use std::{collections::HashSet, fs, path::PathBuf, time::Duration};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ConnectionInfo {
@@ -79,10 +74,10 @@ pub fn find_antigravity_candidates() -> Option<Vec<(u32, String)>> {
         let cmdline_path = entry.path().join("cmdline");
         if let Ok(bytes) = fs::read(cmdline_path) {
             let cmdline = String::from_utf8_lossy(&bytes);
-            if is_antigravity_language_server(&cmdline) {
-                if let Some(token) = extract_csrf_token(&cmdline) {
-                    results.push((pid, token));
-                }
+            if is_antigravity_language_server(&cmdline)
+                && let Some(token) = extract_csrf_token(&cmdline)
+            {
+                results.push((pid, token));
             }
         }
     }
@@ -169,16 +164,12 @@ pub fn find_listening_ports(pid: u32) -> Vec<u16> {
     }
 
     // Fallback using ss if inodes check yielded nothing
-    if ports.is_empty() {
-        if let Ok(output) = std::process::Command::new("ss")
-            .args(["-tlnp"])
-            .output()
-        {
-            if output.status.success() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                ports.extend(parse_ss_output(&stdout, pid));
-            }
-        }
+    if ports.is_empty()
+        && let Ok(output) = std::process::Command::new("ss").args(["-tlnp"]).output()
+        && output.status.success()
+    {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        ports.extend(parse_ss_output(&stdout, pid));
     }
 
     ports.sort_unstable();
@@ -208,10 +199,10 @@ pub fn parse_proc_net_tcp(content: &str, target_inodes: &HashSet<String>) -> Vec
 
         // Local address is in format "0100007F:A2F7" (IP:Port in hex)
         let local_addr = parts[1];
-        if let Some((_, port_hex)) = local_addr.split_once(':') {
-            if let Ok(port) = u16::from_str_radix(port_hex, 16) {
-                ports.push(port);
-            }
+        if let Some((_, port_hex)) = local_addr.split_once(':')
+            && let Ok(port) = u16::from_str_radix(port_hex, 16)
+        {
+            ports.push(port);
         }
     }
     ports
@@ -230,11 +221,11 @@ pub fn parse_ss_output(stdout: &str, pid: u32) -> Vec<u16> {
         let parts: Vec<&str> = line.split_whitespace().collect();
         // Column 4 is usually Local Address:Port (e.g. 127.0.0.1:41719)
         for part in &parts {
-            if let Some(pos) = part.rfind(':') {
-                if let Ok(port) = part[pos + 1..].parse::<u16>() {
-                    ports.push(port);
-                    break;
-                }
+            if let Some(pos) = part.rfind(':')
+                && let Ok(port) = part[pos + 1..].parse::<u16>()
+            {
+                ports.push(port);
+                break;
             }
         }
     }

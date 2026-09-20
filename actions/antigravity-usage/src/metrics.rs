@@ -84,21 +84,13 @@ pub struct PlanInfo {
         default
     )]
     pub monthly_prompt_credits: Option<u64>,
-    #[serde(
-        rename = "monthlyFlowCredits",
-        alias = "monthly_flow_credits",
-        default
-    )]
+    #[serde(rename = "monthlyFlowCredits", alias = "monthly_flow_credits", default)]
     pub monthly_flow_credits: Option<u64>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
 pub struct CascadeModelConfigData {
-    #[serde(
-        rename = "clientModelConfigs",
-        alias = "client_model_configs",
-        default
-    )]
+    #[serde(rename = "clientModelConfigs", alias = "client_model_configs", default)]
     pub client_model_configs: Vec<ClientModelConfig>,
 }
 
@@ -112,11 +104,7 @@ pub struct ClientModelConfig {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
 pub struct QuotaInfo {
-    #[serde(
-        rename = "remainingFraction",
-        alias = "remaining_fraction",
-        default
-    )]
+    #[serde(rename = "remainingFraction", alias = "remaining_fraction", default)]
     pub remaining_fraction: Option<f64>,
     #[serde(rename = "resetTime", alias = "reset_time", default)]
     pub reset_time: Option<String>,
@@ -143,7 +131,9 @@ impl UserStatusResponse {
             Metric::GeminiQuota => {
                 let gemini_cfg = configs
                     .iter()
-                    .find(|c| c.label.to_lowercase().starts_with("gemini") && c.quota_info.is_some())
+                    .find(|c| {
+                        c.label.to_lowercase().starts_with("gemini") && c.quota_info.is_some()
+                    })
                     .and_then(|c| c.quota_info.as_ref());
 
                 Self::format_model_quota(Metric::GeminiQuota.label(), gemini_cfg, fraction_mode)
@@ -151,7 +141,9 @@ impl UserStatusResponse {
             Metric::ClaudeQuota => {
                 let claude_cfg = configs
                     .iter()
-                    .find(|c| c.label.to_lowercase().starts_with("claude") && c.quota_info.is_some())
+                    .find(|c| {
+                        c.label.to_lowercase().starts_with("claude") && c.quota_info.is_some()
+                    })
                     .and_then(|c| c.quota_info.as_ref());
 
                 Self::format_model_quota(Metric::ClaudeQuota.label(), claude_cfg, fraction_mode)
@@ -335,11 +327,7 @@ pub fn render_image(display: &MetricDisplay) -> String {
 
     let svg = format!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><rect width="144" height="144" rx="20" fill="#18181b"/><text x="72" y="34" fill="#8ab4f8" font-family="system-ui,-apple-system,sans-serif" font-size="20" font-weight="700" text-anchor="middle">{}</text><text x="72" y="80" fill="#ffffff" font-family="system-ui,-apple-system,sans-serif" font-size="42" font-weight="700" text-anchor="middle">{}</text><text x="72" y="104" fill="#a1a1aa" font-family="system-ui,-apple-system,sans-serif" font-size="16" font-weight="600" text-anchor="middle">{}</text><rect x="20" y="116" width="104" height="8" rx="4" fill="#27272a"/><rect x="20" y="116" width="{}" height="8" rx="4" fill="{}"/></svg>"##,
-        display.label,
-        display.hero,
-        display.subtitle,
-        bar_w,
-        bar_color
+        display.label, display.hero, display.subtitle, bar_w, bar_color
     );
 
     format!("data:image/svg+xml;base64,{}", base64(svg.as_bytes()))
