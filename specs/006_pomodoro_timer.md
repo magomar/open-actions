@@ -3,9 +3,10 @@ type: Feature Spec
 template: feature
 title: "Pomodoro Timer"
 description: "A native OpenAction plugin for OpenDeck that provides a Pomodoro technique workflow inspired by the Pomotroid aesthetic with custom SVG ring gauges, round tracking, and sound alerts."
-status: draft
+status: implemented
 created: 2026-09-21
 generated: { by: agent/antigravity, at: 2026-09-21T10:35:56Z }
+verified: { by: agent/antigravity, at: 2026-09-21T11:00:00Z }
 ---
 
 # Feature Spec: Pomodoro Timer ⏱️
@@ -228,56 +229,56 @@ impl Default for PomodoroSettings {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Start initial focus session on key press**
-  - [ ] **Given** a Pomodoro Timer action in `Idle` state with 25:00 focus duration
-  - [ ] **When** the user presses the action key
-  - [ ] **Then** the timer transitions to `Running` status, countdown ticks down every second, and the button renders a coral progress ring
+  - [x] **Given** a Pomodoro Timer action in `Idle` state with 25:00 focus duration
+  - [x] **When** the user presses the action key
+  - [x] **Then** the timer transitions to `Running` status, countdown ticks down every second, and the button renders a coral progress ring
 
 - **Scenario: Pause and resume running session**
-  - [ ] **Given** a Pomodoro Timer action currently in `Running` status at `21:40`
-  - [ ] **When** the user presses the action key
-  - [ ] **Then** the timer pauses at `21:40` with status `Paused` and displays a play indicator
-  - [ ] **And When** the user presses the key again
-  - [ ] **Then** the timer resumes countdown from `21:40`
+  - [x] **Given** a Pomodoro Timer action currently in `Running` status at `21:40`
+  - [x] **When** the user presses the action key
+  - [x] **Then** the timer pauses at `21:40` with status `Paused` and displays a play indicator
+  - [x] **And When** the user presses the key again
+  - [x] **Then** the timer resumes countdown from `21:40`
 
 - **Scenario: Transition from Focus to Short Break on intermediate round**
-  - [ ] **Given** a running Focus session on Round 1 of 4 at `0:01`
-  - [ ] **When** 1 second elapses
-  - [ ] **Then** the phase transitions to `ShortBreak` with duration `05:00`, the ring color switches to mint green, and the round indicator remains `1/4`
+  - [x] **Given** a running Focus session on Round 1 of 4 at `0:01`
+  - [x] **When** 1 second elapses
+  - [x] **Then** the phase transitions to `ShortBreak` with duration `05:00`, the ring color switches to mint green, and the round indicator remains `1/4`
 
 - **Scenario: Transition from Focus to Long Break after final round**
-  - [ ] **Given** a running Focus session on Round 4 of 4 at `0:01`
-  - [ ] **When** 1 second elapses
-  - [ ] **Then** the phase transitions to `LongBreak` with duration `15:00`, the ring color switches to cyan, and the round indicator shows `4/4`
+  - [x] **Given** a running Focus session on Round 4 of 4 at `0:01`
+  - [x] **When** 1 second elapses
+  - [x] **Then** the phase transitions to `LongBreak` with duration `15:00`, the ring color switches to cyan, and the round indicator shows `4/4`
 
 - **Scenario: Long Break completion resets cycle to Round 1**
-  - [ ] **Given** a running Long Break session on Round 4 at `0:01`
-  - [ ] **When** 1 second elapses
-  - [ ] **Then** the phase transitions back to `Focus` with duration `25:00` and round counter resets to `1/4`
+  - [x] **Given** a running Long Break session on Round 4 at `0:01`
+  - [x] **When** 1 second elapses
+  - [x] **Then** the phase transitions back to `Focus` with duration `25:00` and round counter resets to `1/4`
 
 - **Scenario: Manual skip advances phase immediately on long press**
-  - [ ] **Given** a running Focus session on Round 2 at `18:30`
-  - [ ] **When** the user performs a long press (>600ms) on the action button
-  - [ ] **Then** the timer immediately skips to `ShortBreak` at `05:00` on Round 2
+  - [x] **Given** a running Focus session on Round 2 at `18:30`
+  - [x] **When** the user performs a long press (>600ms) on the action button
+  - [x] **Then** the timer immediately skips to `ShortBreak` at `05:00` on Round 2
 
 - **Scenario: Reset current phase on double press**
-  - [ ] **Given** a running Focus session at `12:15`
-  - [ ] **When** the user double-presses the action key within 400ms
-  - [ ] **Then** the remaining time resets to `25:00` in `Idle` state without advancing the round counter
+  - [x] **Given** a running Focus session at `12:15`
+  - [x] **When** the user double-presses the action key within 400ms
+  - [x] **Then** the remaining time resets to `25:00` in `Idle` state without advancing the round counter
 
 - **Scenario: Auto-start breaks begins countdown immediately**
-  - [ ] **Given** `auto_start_breaks` is set to `true` in settings
-  - [ ] **When** a Focus session completes
-  - [ ] **Then** the Short Break or Long Break starts counting down immediately with status `Running` without requiring manual key press
+  - [x] **Given** `auto_start_breaks` is set to `true` in settings
+  - [x] **When** a Focus session completes
+  - [x] **Then** the Short Break or Long Break starts counting down immediately with status `Running` without requiring manual key press
 
 - **Scenario: Encoder dial adjusts remaining duration**
-  - [ ] **Given** a Pomodoro Timer action bound to a Stream Deck + encoder dial
-  - [ ] **When** the user rotates the dial clockwise by 2 ticks
-  - [ ] **Then** the remaining duration increases by 2 minutes and updates the display immediately
+  - [x] **Given** a Pomodoro Timer action bound to a Stream Deck + encoder dial
+  - [x] **When** the user rotates the dial clockwise by 2 ticks
+  - [x] **Then** the remaining duration increases by 2 minutes and updates the display immediately
 
 - **Scenario: Property Inspector updates settings reactively**
-  - [ ] **Given** the Property Inspector is open
-  - [ ] **When** the user changes the Focus duration slider to 30 minutes and clicks "Reset Defaults"
-  - [ ] **Then** the values update immediately and synchronize with the action button
+  - [x] **Given** the Property Inspector is open
+  - [x] **When** the user changes the Focus duration slider to 30 minutes and clicks "Reset Defaults"
+  - [x] **Then** the values update immediately and synchronize with the action button
 
 ---
 
@@ -285,20 +286,20 @@ impl Default for PomodoroSettings {
 
 ### Created/Modified Files
 *Paths below are relative to `actions/pomodoro-timer/`.*
-- `[ ]` `src/main.rs` -> Action registration, event routing (key up, long press, dial events), and Tokio timer loop.
-- `[ ]` `src/state.rs` -> Pomodoro state machine, phase transitions, and round progression logic.
-- `[ ]` `src/render.rs` -> Dynamic SVG 144×144 tile renderer (Pomotroid dial ring, typography, badges, color palettes).
-- `[ ]` `src/settings.rs` -> Action and global settings serialization, defaults, and theme definitions.
-- `[ ]` `src/sound.rs` -> Cross-platform audio notification chime player.
-- `[ ]` `pi/src/App.svelte` -> Svelte Property Inspector with Pomotroid sliders, theme picker, and automation switches.
-- `[ ]` `plugin/io.github.mario.pomodorotimer.sdPlugin/manifest.json` -> OpenAction manifest declaring timer, skip, and reset actions.
-- `[ ]` `scripts/package.sh` -> Build and packaging release script.
-- `[ ]` `README.md` -> Action overview, controls guide, and installation instructions.
+- `[x]` `src/main.rs` -> Action registration, event routing (key up, long press, dial events), and Tokio timer loop.
+- `[x]` `src/state.rs` -> Pomodoro state machine, phase transitions, and round progression logic.
+- `[x]` `src/render.rs` -> Dynamic SVG 144×144 tile renderer (Pomotroid dial ring, typography, badges, color palettes).
+- `[x]` `src/settings.rs` -> Action and global settings serialization, defaults, and theme definitions.
+- `[x]` `src/sound.rs` -> Cross-platform audio notification chime player.
+- `[x]` `pi/src/App.svelte` -> Svelte Property Inspector with Pomotroid sliders, theme picker, and automation switches.
+- `[x]` `plugin/io.github.mario.pomodorotimer.sdPlugin/manifest.json` -> OpenAction manifest declaring timer, skip, and reset actions.
+- `[x]` `scripts/package.sh` -> Build and packaging release script.
+- `[x]` `README.md` -> Action overview, controls guide, and installation instructions.
 
 ### Modified Repository Files
-- `[ ]` `specs/constitution/ROADMAP.md` -> Register the Pomodoro Timer milestone.
-- `[ ]` `specs/index.md` -> Register `006_pomodoro_timer.md`.
-- `[ ]` `README.md` -> Add Pomodoro Timer to actions directory summary.
+- `[x]` `specs/constitution/ROADMAP.md` -> Register the Pomodoro Timer milestone.
+- `[x]` `specs/index.md` -> Register `006_pomodoro_timer.md`.
+- `[x]` `README.md` -> Add Pomodoro Timer to actions directory summary.
 
 ### Verification Assertions
 - `src/state.rs` references `specs/006_pomodoro_timer.md` in its header comments.

@@ -79,15 +79,15 @@ impl Core {
                     (ev, settings.sound_enabled, settings.volume)
                 };
 
-                if let Some(ev) = event {
-                    if sound_enabled {
-                        match ev {
-                            TransitionEvent::FocusCompleted { .. } => {
-                                play_focus_complete(volume);
-                            }
-                            TransitionEvent::BreakCompleted { .. } => {
-                                play_break_complete(volume);
-                            }
+                if let Some(ev) = event
+                    && sound_enabled
+                {
+                    match ev {
+                        TransitionEvent::FocusCompleted { .. } => {
+                            play_focus_complete(volume);
+                        }
+                        TransitionEvent::BreakCompleted { .. } => {
+                            play_break_complete(volume);
                         }
                     }
                 }
@@ -111,7 +111,11 @@ impl Core {
         clicks.remove(id);
     }
 
-    pub async fn refresh_instance(&self, instance: &Instance, kind: ActionKind) -> OpenActionResult<()> {
+    pub async fn refresh_instance(
+        &self,
+        instance: &Instance,
+        kind: ActionKind,
+    ) -> OpenActionResult<()> {
         let theme = {
             let s = self.settings.read().await;
             s.resolve_theme()
@@ -256,7 +260,9 @@ impl Action for TimerAction {
     const UUID: &'static str = TIMER_UUID;
     type Settings = PomodoroSettings;
     async fn will_appear(&self, i: &Instance, s: &PomodoroSettings) -> OpenActionResult<()> {
-        self.0.register_instance(i.instance_id.clone(), ActionKind::Timer).await;
+        self.0
+            .register_instance(i.instance_id.clone(), ActionKind::Timer)
+            .await;
         self.0.apply_settings(s.clone()).await;
         self.0.refresh_instance(i, ActionKind::Timer).await
     }
@@ -269,10 +275,18 @@ impl Action for TimerAction {
         Ok(())
     }
     async fn key_up(&self, i: &Instance, _: &PomodoroSettings) -> OpenActionResult<()> {
-        self.0.handle_key_up(&i.instance_id, ActionKind::Timer).await;
+        self.0
+            .handle_key_up(&i.instance_id, ActionKind::Timer)
+            .await;
         Ok(())
     }
-    async fn dial_rotate(&self, _: &Instance, _: &PomodoroSettings, ticks: i16, _: bool) -> OpenActionResult<()> {
+    async fn dial_rotate(
+        &self,
+        _: &Instance,
+        _: &PomodoroSettings,
+        ticks: i16,
+        _: bool,
+    ) -> OpenActionResult<()> {
         self.0.handle_dial_rotate(ticks).await;
         Ok(())
     }
@@ -280,17 +294,26 @@ impl Action for TimerAction {
         self.0.handle_dial_down().await;
         Ok(())
     }
-    async fn did_receive_settings(&self, _: &Instance, s: &PomodoroSettings) -> OpenActionResult<()> {
+    async fn did_receive_settings(
+        &self,
+        _: &Instance,
+        s: &PomodoroSettings,
+    ) -> OpenActionResult<()> {
         self.0.apply_settings(s.clone()).await;
         Ok(())
     }
-    async fn send_to_plugin(&self, i: &Instance, _: &PomodoroSettings, payload: &Value) -> OpenActionResult<()> {
-        if let Some(event) = payload.get("event").and_then(Value::as_str) {
-            if event == "reset_defaults" {
-                let defaults = PomodoroSettings::default();
-                i.set_settings(&defaults).await?;
-                self.0.apply_settings(defaults).await;
-            }
+    async fn send_to_plugin(
+        &self,
+        i: &Instance,
+        _: &PomodoroSettings,
+        payload: &Value,
+    ) -> OpenActionResult<()> {
+        if let Some(event) = payload.get("event").and_then(Value::as_str)
+            && event == "reset_defaults"
+        {
+            let defaults = PomodoroSettings::default();
+            i.set_settings(&defaults).await?;
+            self.0.apply_settings(defaults).await;
         }
         Ok(())
     }
@@ -302,7 +325,9 @@ impl Action for SkipAction {
     const UUID: &'static str = SKIP_UUID;
     type Settings = PomodoroSettings;
     async fn will_appear(&self, i: &Instance, s: &PomodoroSettings) -> OpenActionResult<()> {
-        self.0.register_instance(i.instance_id.clone(), ActionKind::Skip).await;
+        self.0
+            .register_instance(i.instance_id.clone(), ActionKind::Skip)
+            .await;
         self.0.apply_settings(s.clone()).await;
         self.0.refresh_instance(i, ActionKind::Skip).await
     }
@@ -318,7 +343,11 @@ impl Action for SkipAction {
         self.0.handle_key_up(&i.instance_id, ActionKind::Skip).await;
         Ok(())
     }
-    async fn did_receive_settings(&self, _: &Instance, s: &PomodoroSettings) -> OpenActionResult<()> {
+    async fn did_receive_settings(
+        &self,
+        _: &Instance,
+        s: &PomodoroSettings,
+    ) -> OpenActionResult<()> {
         self.0.apply_settings(s.clone()).await;
         Ok(())
     }
@@ -330,7 +359,9 @@ impl Action for ResetAction {
     const UUID: &'static str = RESET_UUID;
     type Settings = PomodoroSettings;
     async fn will_appear(&self, i: &Instance, s: &PomodoroSettings) -> OpenActionResult<()> {
-        self.0.register_instance(i.instance_id.clone(), ActionKind::Reset).await;
+        self.0
+            .register_instance(i.instance_id.clone(), ActionKind::Reset)
+            .await;
         self.0.apply_settings(s.clone()).await;
         self.0.refresh_instance(i, ActionKind::Reset).await
     }
@@ -343,10 +374,16 @@ impl Action for ResetAction {
         Ok(())
     }
     async fn key_up(&self, i: &Instance, _: &PomodoroSettings) -> OpenActionResult<()> {
-        self.0.handle_key_up(&i.instance_id, ActionKind::Reset).await;
+        self.0
+            .handle_key_up(&i.instance_id, ActionKind::Reset)
+            .await;
         Ok(())
     }
-    async fn did_receive_settings(&self, _: &Instance, s: &PomodoroSettings) -> OpenActionResult<()> {
+    async fn did_receive_settings(
+        &self,
+        _: &Instance,
+        s: &PomodoroSettings,
+    ) -> OpenActionResult<()> {
         self.0.apply_settings(s.clone()).await;
         Ok(())
     }
@@ -371,7 +408,8 @@ mod tests {
     #[tokio::test]
     async fn core_lifecycle_and_key_handling() {
         let core = Arc::new(Core::new());
-        core.register_instance("btn-1".to_string(), ActionKind::Timer).await;
+        core.register_instance("btn-1".to_string(), ActionKind::Timer)
+            .await;
 
         // Start countdown
         core.handle_key_down("btn-1").await;

@@ -181,12 +181,7 @@ impl PomodoroState {
         }
     }
 
-    pub fn skip(
-        &mut self,
-        focus_mins: u32,
-        short_break_mins: u32,
-        long_break_mins: u32,
-    ) {
+    pub fn skip(&mut self, focus_mins: u32, short_break_mins: u32, long_break_mins: u32) {
         match self.phase {
             Phase::Focus => {
                 let is_last_round = self.current_round >= self.total_rounds;
@@ -220,12 +215,7 @@ impl PomodoroState {
         self.status = TimerStatus::Paused;
     }
 
-    pub fn reset_phase(
-        &mut self,
-        focus_mins: u32,
-        short_break_mins: u32,
-        long_break_mins: u32,
-    ) {
+    pub fn reset_phase(&mut self, focus_mins: u32, short_break_mins: u32, long_break_mins: u32) {
         let mins = match self.phase {
             Phase::Focus => focus_mins,
             Phase::ShortBreak => short_break_mins,

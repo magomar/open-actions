@@ -44,10 +44,7 @@ impl PomodoroSettings {
             let base = ThemeColors::classic();
             ThemeColors {
                 name: "custom".to_string(),
-                focus: self
-                    .custom_focus_color
-                    .clone()
-                    .unwrap_or(base.focus),
+                focus: self.custom_focus_color.clone().unwrap_or(base.focus),
                 short_break: self
                     .custom_short_break_color
                     .clone()
