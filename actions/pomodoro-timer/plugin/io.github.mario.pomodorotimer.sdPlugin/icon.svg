@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+  <rect width="144" height="144" rx="28" fill="#1e222b"/>
+  <!-- Outer circle track -->
+  <circle cx="72" cy="72" r="50" fill="none" stroke="#2e3440" stroke-width="8"/>
+  <!-- Coral active progress ring -->
+  <circle cx="72" cy="72" r="50" fill="none" stroke="#ef5350" stroke-width="8" stroke-dasharray="314.15" stroke-dashoffset="78.5" stroke-linecap="round" transform="rotate(-90 72 72)"/>
+  <!-- Tomato leaf top glyph -->
+  <path d="M72 38 C72 32, 78 26, 84 28 C80 34, 76 36, 72 38 Z" fill="#4ade80"/>
+  <!-- Center Pomodoro Clock text -->
+  <text x="72" y="76" fill="#f8fafc" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="800" text-anchor="middle">25:00</text>
+  <text x="72" y="94" fill="#ef5350" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="700" letter-spacing="1" text-anchor="middle">POMO</text>
+</svg>

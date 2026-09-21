@@ -1,0 +1,37 @@
+{
+  "Name": "Pomodoro Timer",
+  "Author": "mario",
+  "Version": "0.1.0",
+  "Category": "Productivity",
+  "Icon": "icon",
+  "OS": [{ "Platform": "linux" }, { "Platform": "mac" }],
+  "CodePathLin": "pomodoro-timer",
+  "CodePathMac": "pomodoro-timer",
+  "PropertyInspectorPath": "pi/index.html",
+  "Actions": [
+    {
+      "UUID": "io.github.mario.pomodorotimer.timer",
+      "Name": "Timer",
+      "Icon": "actions/timer",
+      "Tooltip": "Pomodoro timer dial with round tracking and phase controls",
+      "Controllers": ["Keypad", "Encoder"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.pomodorotimer.skip",
+      "Name": "Skip Phase",
+      "Icon": "actions/skip",
+      "Tooltip": "Skip to the next Pomodoro phase",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.pomodorotimer.reset",
+      "Name": "Reset Timer",
+      "Icon": "actions/reset",
+      "Tooltip": "Reset active Pomodoro phase or restart session",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    }
+  ]
+}

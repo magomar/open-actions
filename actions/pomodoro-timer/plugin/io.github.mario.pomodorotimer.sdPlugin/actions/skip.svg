@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+  <rect width="144" height="144" rx="20" fill="#1e222b"/>
+  <!-- Skip icon: triangle and bar -->
+  <path d="M48 44 L88 72 L48 100 Z M92 44 L102 44 L102 100 L92 100 Z" fill="#4ade80"/>
+  <text x="72" y="122" fill="#94a3b8" font-family="system-ui,-apple-system,sans-serif" font-size="14" font-weight="700" text-anchor="middle">SKIP</text>
+</svg>
