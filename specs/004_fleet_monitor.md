@@ -103,6 +103,7 @@ Supports two toggleable display modes:
 - **For `Fleet Project`**:
   - **Project Selector**: Dropdown listing all registered projects fetched dynamically from Fleet (`/api/projects`).
   - **Display Mode**: Select dropdown between "Project Status (Overview)" and "Bead Issues (4-Corner Breakdown)".
+  - **Metrics Timeout**: Configurable auto-revert duration in seconds (`metricsTimeoutSecs`, defaults to 0 / disabled). When 0 or unset, the metrics view stays visible until the button is clicked again. When > 0, the button automatically reverts to Project Status overview after that duration.
   - Refresh Telemetry button.
 
 ---
@@ -160,7 +161,8 @@ All action instances share an `Arc<RwLock<SharedFleetState>>`. When telemetry re
 #### Global Action (`io.github.mario.fleet.global`):
 ```json
 {
-  "api_url": "http://127.0.0.1:3000"
+  "api_url": "http://127.0.0.1:3000",
+  "refresh_interval_secs": 10
 }
 ```
 
@@ -169,7 +171,8 @@ All action instances share an `Arc<RwLock<SharedFleetState>>`. When telemetry re
 {
   "api_url": "http://127.0.0.1:3000",
   "project_id": "tdrace",
-  "display_mode": "status"
+  "display_mode": "status",
+  "metrics_timeout_secs": 0
 }
 ```
 
@@ -209,8 +212,15 @@ All action instances share an `Arc<RwLock<SharedFleetState>>`. When telemetry re
 
 - **Scenario: Fixed Project action switches workspace and toggles mode on press**
   - [x] **Given** a Fleet Project action configured with a target `project_id` and currently in `Status` mode
-  - [x] **When** the user presses the Fleet Project button
-  - [x] **Then** Fleet receives `POST /api/projects/switch` to switch the active workspace to that project, and the button toggles to `Issues` mode
+  - [x] **When** the user clicks the Fleet Project button (key release)
+  - [x] **Then** Fleet receives `POST /api/projects/switch` to switch the active workspace to that project, the button toggles to `Issues` mode, and it stays in `Issues` mode on finger release
+
+- **Scenario: Metrics view stays until clicked again or reverts after timeout**
+  - [x] **Given** a Fleet Project action currently displaying the `Issues` metrics view
+  - [x] **When** `metricsTimeoutSecs` is 0 or unset
+  - [x] **Then** the button remains in `Issues` mode across finger release and polling cycles until clicked again
+  - [x] **When** `metricsTimeoutSecs` is set to a positive duration (e.g. 5 seconds)
+  - [x] **Then** the button automatically reverts to `Status` overview mode after 5 seconds unless re-clicked earlier
 
 - **Scenario: Fleet Project displays bead issues breakdown in 4 corners**
   - [x] **Given** a Fleet Project action in `Issues` display mode

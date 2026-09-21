@@ -297,6 +297,8 @@ pub struct ProjectActionSettings {
     pub project_id: Option<String>,
     #[serde(rename = "displayMode", default)]
     pub display_mode: ProjectDisplayMode,
+    #[serde(rename = "metricsTimeoutSecs", skip_serializing_if = "Option::is_none")]
+    pub metrics_timeout_secs: Option<u64>,
 }
 
 impl Default for ProjectActionSettings {
@@ -305,6 +307,7 @@ impl Default for ProjectActionSettings {
             api_url: default_api_url(),
             project_id: None,
             display_mode: ProjectDisplayMode::default(),
+            metrics_timeout_secs: None,
         }
     }
 }
@@ -350,10 +353,27 @@ impl<'de> Deserialize<'de> for ProjectActionSettings {
             })
             .unwrap_or_default();
 
+        let metrics_timeout_secs = v
+            .get("metricsTimeoutSecs")
+            .or_else(|| v.get("metrics_timeout_secs"))
+            .or_else(|| v.get("autoRevertSecs"))
+            .or_else(|| v.get("auto_revert_secs"))
+            .and_then(|val| {
+                if let Some(n) = val.as_u64() {
+                    Some(n)
+                } else if let Some(s) = val.as_str() {
+                    s.parse::<u64>().ok()
+                } else {
+                    None
+                }
+            })
+            .filter(|&secs| secs > 0);
+
         Ok(Self {
             api_url,
             project_id,
             display_mode,
+            metrics_timeout_secs,
         })
     }
 }
@@ -517,5 +537,36 @@ mod tests {
         // Legacy/alias beads
         let s: ProjectActionSettings = serde_json::from_str(r#"{"mode": "beads"}"#).unwrap();
         assert_eq!(s.display_mode, ProjectDisplayMode::Issues);
+    }
+
+    #[test]
+    fn test_deserialize_project_action_settings_metrics_timeout() {
+        // Default / empty -> None (stay until clicked again)
+        let s: ProjectActionSettings = serde_json::from_str("{}").unwrap();
+        assert_eq!(s.metrics_timeout_secs, None);
+
+        // Numeric timeout
+        let s: ProjectActionSettings =
+            serde_json::from_str(r#"{"metricsTimeoutSecs": 5}"#).unwrap();
+        assert_eq!(s.metrics_timeout_secs, Some(5));
+
+        // String timeout from input
+        let s: ProjectActionSettings =
+            serde_json::from_str(r#"{"metricsTimeoutSecs": "10"}"#).unwrap();
+        assert_eq!(s.metrics_timeout_secs, Some(10));
+
+        // 0 -> None (disabled)
+        let s: ProjectActionSettings =
+            serde_json::from_str(r#"{"metricsTimeoutSecs": 0}"#).unwrap();
+        assert_eq!(s.metrics_timeout_secs, None);
+
+        // Snake case alias
+        let s: ProjectActionSettings =
+            serde_json::from_str(r#"{"metrics_timeout_secs": 15}"#).unwrap();
+        assert_eq!(s.metrics_timeout_secs, Some(15));
+
+        // autoRevertSecs alias
+        let s: ProjectActionSettings = serde_json::from_str(r#"{"autoRevertSecs": 20}"#).unwrap();
+        assert_eq!(s.metrics_timeout_secs, Some(20));
     }
 }

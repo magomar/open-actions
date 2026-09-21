@@ -25,6 +25,7 @@
     fixedProjectId: "",
     refreshIntervalSecs: 10,
     displayMode: "status",
+    metricsTimeoutSecs: 0,
   };
 
   const settings = $derived({ ...defaults, ...$actionSettings });
@@ -152,6 +153,23 @@
         </select>
         <span class="hint">
           Clicking the key on the deck toggles between Status Overview and Bead Issues breakdown.
+        </span>
+      </div>
+      <div class="field" style="margin-top: 12px;">
+        <label for="metricsTimeout">Metrics Timeout (Seconds)</label>
+        <input
+          type="number"
+          id="metricsTimeout"
+          min="0"
+          max="3600"
+          value={settings.metricsTimeoutSecs}
+          oninput={(e) => {
+            const parsed = parseInt((e.target as HTMLInputElement).value, 10);
+            update("metricsTimeoutSecs", isNaN(parsed) || parsed < 0 ? 0 : parsed);
+          }}
+        />
+        <span class="hint">
+          Seconds before returning to project status overview (0 = stay until clicked again).
         </span>
       </div>
     </div>

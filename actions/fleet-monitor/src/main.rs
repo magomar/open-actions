@@ -20,7 +20,7 @@ mod icon;
 mod state;
 
 use client::{FleetClient, launch_fleet};
-use state::{GlobalActionSettings, ProjectActionSettings, SharedFleetState};
+use state::{GlobalActionSettings, ProjectActionSettings, ProjectDisplayMode, SharedFleetState};
 
 /// Core coordinator shared across all actions and instances.
 pub struct Core {
@@ -28,6 +28,7 @@ pub struct Core {
     pub client: Arc<RwLock<FleetClient>>,
     pub global_instances: Mutex<HashMap<String, GlobalActionSettings>>,
     pub project_instances: Mutex<HashMap<String, ProjectActionSettings>>,
+    pub project_generations: Mutex<HashMap<String, u64>>,
     pub refresh_interval_secs: Arc<AtomicU64>,
     pub refresh_notifier: Arc<Notify>,
 }
@@ -39,6 +40,7 @@ impl Core {
             client: Arc::new(RwLock::new(FleetClient::new(default_url))),
             global_instances: Mutex::new(HashMap::new()),
             project_instances: Mutex::new(HashMap::new()),
+            project_generations: Mutex::new(HashMap::new()),
             refresh_interval_secs: Arc::new(AtomicU64::new(10)),
             refresh_notifier: Arc::new(Notify::new()),
         }
@@ -144,7 +146,10 @@ impl Core {
         instance: &Instance,
         _settings: &GlobalActionSettings,
     ) -> OpenActionResult<()> {
-        eprintln!("[fleet-monitor] global_press received for instance={}", instance.instance_id);
+        eprintln!(
+            "[fleet-monitor] global_press received for instance={}",
+            instance.instance_id
+        );
         let is_running = self.state.read().await.is_running;
 
         if !is_running {
@@ -167,11 +172,14 @@ impl Core {
 
     /// Handles press on a Fleet Project key (Fixed Project).
     pub async fn project_press(
-        &self,
+        self: &Arc<Self>,
         instance: &Instance,
         settings: &ProjectActionSettings,
     ) -> OpenActionResult<()> {
-        eprintln!("[fleet-monitor] project_press received for instance={}", instance.instance_id);
+        eprintln!(
+            "[fleet-monitor] project_press received for instance={}",
+            instance.instance_id
+        );
         let is_running = self.state.read().await.is_running;
 
         if !is_running {
@@ -185,15 +193,31 @@ impl Core {
             return Ok(());
         }
 
+        // Retrieve current settings from in-memory map or fallback to passed settings
+        let current_settings = {
+            let map = self.project_instances.lock().await;
+            map.get(&instance.instance_id)
+                .cloned()
+                .unwrap_or_else(|| settings.clone())
+        };
+
         // Toggle display mode and persist
-        let mut next_settings = settings.clone();
-        next_settings.display_mode = settings.display_mode.toggle();
+        let mut next_settings = current_settings.clone();
+        next_settings.display_mode = current_settings.display_mode.toggle();
         let _ = instance.set_settings(&next_settings).await;
 
         {
             let mut projects = self.project_instances.lock().await;
             projects.insert(instance.instance_id.clone(), next_settings.clone());
         }
+
+        // Advance generation for this instance to invalidate any previous timeout
+        let generation = {
+            let mut gens = self.project_generations.lock().await;
+            let current_gen = gens.entry(instance.instance_id.clone()).or_insert(0);
+            *current_gen = current_gen.wrapping_add(1);
+            *current_gen
+        };
 
         // Switch workspace if target project is set
         if let Some(ref id) = next_settings.project_id {
@@ -202,6 +226,50 @@ impl Core {
         }
 
         self.render_all().await;
+
+        // If toggled to Issues (metrics view) and an auto-revert timeout is configured, spawn revert timer
+        if next_settings.display_mode == ProjectDisplayMode::Issues
+            && let Some(timeout_secs) = next_settings.metrics_timeout_secs
+            && timeout_secs > 0
+        {
+            let core = Arc::clone(self);
+            let instance_id = instance.instance_id.clone();
+            tokio::spawn(async move {
+                tokio::time::sleep(Duration::from_secs(timeout_secs)).await;
+
+                // Check if generation still matches
+                {
+                    let gens = core.project_generations.lock().await;
+                    if gens.get(&instance_id).copied() != Some(generation) {
+                        return;
+                    }
+                }
+
+                // Revert to Status overview
+                let mut reverted_settings = None;
+                {
+                    let mut projects = core.project_instances.lock().await;
+                    if let Some(proj_settings) = projects.get_mut(&instance_id)
+                        && proj_settings.display_mode == ProjectDisplayMode::Issues
+                    {
+                        proj_settings.display_mode = ProjectDisplayMode::Status;
+                        reverted_settings = Some(proj_settings.clone());
+                    }
+                }
+
+                if let Some(reverted) = reverted_settings {
+                    eprintln!(
+                        "[fleet-monitor] auto-reverting instance={} back to Status overview after {}s",
+                        instance_id, timeout_secs
+                    );
+                    if let Some(inst) = get_instance(instance_id).await {
+                        let _ = inst.set_settings(&reverted).await;
+                    }
+                    core.render_all().await;
+                }
+            });
+        }
+
         Ok(())
     }
 
@@ -289,19 +357,7 @@ impl Action for FleetGlobalAction {
         Ok(())
     }
 
-    async fn key_down(
-        &self,
-        instance: &Instance,
-        settings: &Self::Settings,
-    ) -> OpenActionResult<()> {
-        self.core.global_press(instance, settings).await
-    }
-
-    async fn key_up(
-        &self,
-        instance: &Instance,
-        settings: &Self::Settings,
-    ) -> OpenActionResult<()> {
+    async fn key_up(&self, instance: &Instance, settings: &Self::Settings) -> OpenActionResult<()> {
         self.core.global_press(instance, settings).await
     }
 
@@ -355,6 +411,10 @@ impl Action for FleetProjectAction {
             let mut projects = self.core.project_instances.lock().await;
             projects.insert(instance.instance_id.clone(), settings.clone());
         }
+        {
+            let mut gens = self.core.project_generations.lock().await;
+            gens.insert(instance.instance_id.clone(), 0);
+        }
         self.core.refresh().await;
         Ok(())
     }
@@ -370,22 +430,12 @@ impl Action for FleetProjectAction {
         );
         let mut projects = self.core.project_instances.lock().await;
         projects.remove(&instance.instance_id);
+        let mut gens = self.core.project_generations.lock().await;
+        gens.remove(&instance.instance_id);
         Ok(())
     }
 
-    async fn key_down(
-        &self,
-        instance: &Instance,
-        settings: &Self::Settings,
-    ) -> OpenActionResult<()> {
-        self.core.project_press(instance, settings).await
-    }
-
-    async fn key_up(
-        &self,
-        instance: &Instance,
-        settings: &Self::Settings,
-    ) -> OpenActionResult<()> {
+    async fn key_up(&self, instance: &Instance, settings: &Self::Settings) -> OpenActionResult<()> {
         self.core.project_press(instance, settings).await
     }
 
@@ -402,6 +452,12 @@ impl Action for FleetProjectAction {
         {
             let mut projects = self.core.project_instances.lock().await;
             projects.insert(instance.instance_id.clone(), settings.clone());
+        }
+        // Advance generation to cancel any pending auto-revert timer
+        {
+            let mut gens = self.core.project_generations.lock().await;
+            let current_gen = gens.entry(instance.instance_id.clone()).or_insert(0);
+            *current_gen = current_gen.wrapping_add(1);
         }
         self.core.render_all().await;
         Ok(())
