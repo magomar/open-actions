@@ -182,6 +182,18 @@ fn read_icon_file(path: &std::path::Path) -> Option<String> {
     }
 }
 
+fn format_project_title(name: &str) -> (usize, String) {
+    if name.len() <= 8 {
+        (17, name.to_string())
+    } else if name.len() <= 12 {
+        (15, name.to_string())
+    } else if name.len() <= 15 {
+        (14, name.to_string())
+    } else {
+        (14, format!("{}…", &name[..13]))
+    }
+}
+
 /// Renders the button face for the Fleet Project action.
 pub fn project_icon(
     summary: Option<&ProjectSummaryState>,
@@ -191,24 +203,28 @@ pub fn project_icon(
     if !is_running {
         let custom_icon = summary.and_then(find_project_icon);
         let center_visual = if let Some(ref uri) = custom_icon {
-            format!(r##"<image href="{uri}" x="38" y="32" width="68" height="68" opacity="0.4"/>"##)
+            format!(r##"<image href="{uri}" x="45" y="40" width="54" height="54" opacity="0.4"/>"##)
         } else {
-            render_helm(72.0, 64.0, 26.0, "#64748b", true)
+            render_helm(72.0, 67.0, 20.0, "#64748b", true)
         };
         let name = summary.map(|s| s.project.name.as_str()).unwrap_or("Fleet");
+        let (font_size, proj_name) = format_project_title(name);
         let body = format!(
-            r##"<text x="72" y="23" fill="#94a3b8" font-size="13" font-weight="bold" font-family="system-ui, sans-serif" text-anchor="middle">{name}</text>
+            r##"<text x="72" y="25" fill="#94a3b8" font-size="{font_size}" font-weight="bold" font-family="system-ui, sans-serif" text-anchor="middle">{name}</text>
   {center_visual}
   <rect x="24" y="112" width="96" height="20" rx="10" fill="#334155" opacity="0.8"/>
-  <text x="72" y="126" fill="#f8fafc" font-size="10" font-weight="bold" font-family="system-ui, sans-serif" text-anchor="middle">OFFLINE · TAP</text>"##
+  <text x="72" y="126" fill="#f8fafc" font-size="10" font-weight="bold" font-family="system-ui, sans-serif" text-anchor="middle">OFFLINE · TAP</text>"##,
+            font_size = font_size,
+            name = proj_name,
+            center_visual = center_visual
         );
         return data_uri(&tile(&body, "#475569"));
     }
 
     let Some(summary) = summary else {
-        let helm = render_helm(72.0, 64.0, 26.0, "#38bdf8", false);
+        let helm = render_helm(72.0, 67.0, 20.0, "#38bdf8", false);
         let body = format!(
-            r##"<text x="72" y="23" fill="#94a3b8" font-size="13" font-weight="bold" font-family="system-ui, sans-serif" text-anchor="middle">Empty</text>
+            r##"<text x="72" y="25" fill="#94a3b8" font-size="16" font-weight="bold" font-family="system-ui, sans-serif" text-anchor="middle">Empty</text>
   {helm}
   <text x="72" y="126" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif" text-anchor="middle">No Projects</text>"##
         );
@@ -254,40 +270,56 @@ pub fn project_icon(
 
     // Default Status Overview mode
     let center_visual = if let Some(ref uri) = custom_icon {
-        format!(r##"<image href="{uri}" x="38" y="32" width="68" height="68"/>"##)
+        format!(r##"<image href="{uri}" x="45" y="40" width="54" height="54"/>"##)
     } else {
-        render_helm(72.0, 66.0, 25.0, color, false)
+        render_helm(72.0, 67.0, 20.0, color, false)
     };
 
-    // Status indicator: subtle pill with iconic symbol in state color (no illegible text)
+    // Status indicator: freestanding enlarged Fleet app icon in state color (no enclosing pill shape)
     let status_glyph = match state {
         ProjectState::Clean => {
-            r##"<path d="M66 122 l4 4 l8 -8" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>"##
+            // Fleet app CheckCircle2 (lucide CircleCheckBig)
+            r##"<g transform="translate(60, 108)" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M21.801 10A10 10 0 1 1 17 3.335"/>
+    <path d="m9 11 3 3L22 4"/>
+  </g>"##
         }
-        ProjectState::Ready => r##"<circle cx="72" cy="122" r="5" fill="#38bdf8"/>"##,
+        ProjectState::Ready => {
+            // Fleet app Sparkles (lucide Sparkles)
+            r##"<g transform="translate(60, 108)" stroke="#38bdf8" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+    <path d="M20 3v4"/>
+    <path d="M22 5h-4"/>
+    <path d="M4 17v2"/>
+    <path d="M5 18H3"/>
+  </g>"##
+        }
         ProjectState::InProgress => {
-            r##"<path d="M73 115 l-4 7 h5 l-2 7 l6 -8 h-5 z" fill="#f59e0b"/>"##
+            // Fleet app Clock (lucide Clock)
+            r##"<g transform="translate(60, 108)" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
+  </g>"##
         }
         ProjectState::Blocked => {
-            r##"<rect x="71" y="116" width="2.2" height="7" rx="1" fill="#ef4444"/><circle cx="72.1" cy="126" r="1.3" fill="#ef4444"/>"##
+            // Fleet app AlertCircle (lucide CircleAlert)
+            r##"<g transform="translate(60, 108)" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </g>"##
         }
     };
 
-    let proj_name = if summary.project.name.len() > 14 {
-        format!("{}…", &summary.project.name[..13])
-    } else {
-        summary.project.name.clone()
-    };
+    let (font_size, proj_name) = format_project_title(&summary.project.name);
 
     let body = format!(
-        r##"<text x="72" y="23" fill="#f8fafc" font-size="13" font-weight="bold" font-family="system-ui, sans-serif" text-anchor="middle">{name}</text>
+        r##"<text x="72" y="25" fill="#f8fafc" font-size="{font_size}" font-weight="bold" font-family="system-ui, sans-serif" text-anchor="middle">{name}</text>
   {center_visual}
-  <!-- Status pill -->
-  <rect x="52" y="112" width="40" height="20" rx="10" fill="#0f172a" stroke="{color}" stroke-width="1.8"/>
   {status_glyph}"##,
+        font_size = font_size,
         name = proj_name,
         center_visual = center_visual,
-        color = color,
         status_glyph = status_glyph
     );
 
@@ -404,6 +436,78 @@ mod tests {
         assert_ne!(u_clean, u_ready);
         assert_ne!(u_ready, u_in_prog);
         assert_ne!(u_in_prog, u_blocked);
+
+        // Verify that exact Fleet app status glyphs are embedded
+        let raw_clean = String::from_utf8(to_base64_decode(
+            u_clean.trim_start_matches("data:image/svg+xml;base64,"),
+        ))
+        .unwrap();
+        assert!(
+            raw_clean.contains("21.801 10A10"),
+            "Clean CheckCircle2 missing"
+        );
+        assert!(
+            !raw_clean.contains(r#"<rect x="52""#),
+            "Status pill rect should be removed"
+        );
+        assert!(
+            raw_clean.contains(r#"transform="translate(60, 108)""#),
+            "Enlarged status glyph position missing"
+        );
+        assert!(
+            raw_clean.contains(r#"font-size="17""#),
+            "Short title font-size 17 missing"
+        );
+
+        let raw_ready = String::from_utf8(to_base64_decode(
+            u_ready.trim_start_matches("data:image/svg+xml;base64,"),
+        ))
+        .unwrap();
+        assert!(raw_ready.contains("9.937 15.5"), "Ready Sparkles missing");
+
+        let raw_in_prog = String::from_utf8(to_base64_decode(
+            u_in_prog.trim_start_matches("data:image/svg+xml;base64,"),
+        ))
+        .unwrap();
+        assert!(
+            raw_in_prog.contains(r#"points="12 6 12 12 16 14""#),
+            "InProgress Clock missing"
+        );
+        assert!(
+            raw_in_prog.contains(r#"font-size="15""#),
+            "Medium title font-size 15 missing"
+        );
+
+        let raw_blocked = String::from_utf8(to_base64_decode(
+            u_blocked.trim_start_matches("data:image/svg+xml;base64,"),
+        ))
+        .unwrap();
+        assert!(
+            raw_blocked.contains(r#"line x1="12" y1="8""#),
+            "Blocked AlertCircle missing"
+        );
+    }
+
+    #[test]
+    fn test_format_project_title_scaling() {
+        assert_eq!(format_project_title("fleet"), (17, "fleet".to_string()));
+        assert_eq!(format_project_title("tdrace"), (17, "tdrace".to_string()));
+        assert_eq!(
+            format_project_title("quant-trade"),
+            (15, "quant-trade".to_string())
+        );
+        assert_eq!(
+            format_project_title("open-actions"),
+            (15, "open-actions".to_string())
+        );
+        assert_eq!(
+            format_project_title("pomodoro-timer"),
+            (14, "pomodoro-timer".to_string())
+        );
+        assert_eq!(
+            format_project_title("very-long-project-name"),
+            (14, "very-long-pro…".to_string())
+        );
     }
 
     #[test]

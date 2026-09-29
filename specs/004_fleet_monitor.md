@@ -71,15 +71,15 @@ Each button generates an SVG image rendered dynamically in Rust and pushed as a 
 Supports two toggleable display modes:
 
 1. **Status Overview Mode (`status`)**:
-   - **Top**: Project Name (e.g., `tdrace` or `quant-trade`).
-   - **Center**:
+   - **Top**: Project Name enlarged for immediate readability at distance (e.g., `tdrace` or `quant-trade`), with responsive font scaling (14-17px).
+   - **Center**: Sized identically to the Fleet Global action (radius 20px / 54x54px bounds):
      - **Custom Project Icon Detection**: If the project contains an icon asset (`assets/icons/icon.svg`, `icon.svg`, `icon.png`, `src-tauri/icons/icon.svg`, or `project.icon` from API), the custom icon is rendered directly.
      - **Fallback**: If no custom icon exists, the Fleet ship helm is rendered illuminated in the active state color (🟢 Green, 🔵 Blue, 🟡 Amber, or 🔴 Red).
-   - **Bottom Status Display**: A clean status pill using the state color and a small, legible vector icon (eliminating tiny, unreadable text labels):
-     - 🟢 **Clean**: Emerald Green pill with checkmark `✓` (`#10b981`)
-     - 🔵 **Ready**: Sky Blue pill with dot `●` (`#38bdf8`)
-     - 🟡 **In Progress**: Amber pill with lightning bolt `⚡` (`#f59e0b`)
-     - 🔴 **Blocked**: Crimson Red pill with exclamation alert `!` (`#ef4444`)
+   - **Bottom Status Display**: An enlarged freestanding status icon using the state color and the exact vector icons from the Fleet application (without surrounding pill shape to maximize icon size and clarity):
+     - 🟢 **Clean**: CheckCircle2 (`#10b981`)
+     - 🔵 **Ready**: Sparkles (`#38bdf8`)
+     - 🟡 **In Progress**: Clock (`#f59e0b`)
+     - 🔴 **Blocked**: AlertCircle (`#ef4444`)
 
 2. **Bead Issues Breakdown Mode (`issues`)**:
    - Uses the identical 4-corner layout as Fleet Global to display the project's bead tasks:
@@ -242,10 +242,10 @@ All action instances share an `Arc<RwLock<SharedFleetState>>`. When telemetry re
   - [x] **When** its button image is generated
   - [x] **Then** the button renders the project's custom icon in the center instead of the Fleet helm
 
-- **Scenario: Clean status pill with state vector glyph**
+- **Scenario: Enlarged freestanding status icon with state vector glyph**
   - [x] **Given** a Fleet Project action in `Status` mode in any of the 4 states
   - [x] **When** its button is displayed
-  - [x] **Then** it renders a compact status pill with a crisp vector symbol (`✓`, `●`, `⚡`, `!`) in the matching state color rather than illegible text labels
+  - [x] **Then** it renders an enlarged freestanding status icon with the matching Fleet app Lucide icon (`CheckCircle2`, `Sparkles`, `Clock`, `AlertCircle`) in the matching state color without enclosing pill shape to maximize clarity
 
 - **Scenario: Configurable telemetry polling frequency**
   - [x] **Given** a Fleet Global action instance
