@@ -4,9 +4,10 @@ template: feature
 title: "Pomodoro Timer"
 description: "A native OpenAction plugin for OpenDeck that provides a Pomodoro technique workflow inspired by the Pomotroid aesthetic with custom SVG ring gauges, round tracking, and sound alerts."
 status: implemented
+receipt: "docs/receipts/spec-006-receipt.md"
 created: 2026-09-21
 generated: { by: agent/antigravity, at: 2026-09-21T10:35:56Z }
-verified: { by: agent/antigravity, at: 2026-09-21T11:00:00Z }
+verified: { by: agent/antigravity, at: 2026-09-21T11:00:00Z, hash: "ede5df684f1d" }
 ---
 
 # Feature Spec: Pomodoro Timer ⏱️

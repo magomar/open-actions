@@ -23,3 +23,7 @@ actions/*/plugin/*.zip
 # br doctor per-run artifacts
 .doctor/
 .bv/
+
+# Keel / agent local state
+.claude/worktrees/
+.claude/launch.json

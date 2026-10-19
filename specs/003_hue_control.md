@@ -4,9 +4,10 @@ template: feature
 title: "Hue Control"
 description: "A native OpenAction plugin that controls Philips Hue lights over the Bridge local API — Switch, Color, Temperature, Brightness, and Scene (with fixed and cycling modes)."
 status: implemented
+receipt: "docs/receipts/spec-003-receipt.md"
 created: 2026-09-16
 generated: { by: agent/vulcan, at: 2026-09-16T18:35:00Z }
-verified: { by: agent/vulcan, at: 2026-09-16T21:20:00Z }
+verified: { by: agent/vulcan, at: 2026-09-16T21:20:00Z, hash: "7f0c9ff3c30d" }
 ---
 
 # Feature Spec: Hue Control 🌈
