@@ -1,0 +1,218 @@
+---
+type: Feature Spec
+template: feature
+title: "GPU Screen Recorder"
+description: "An OpenAction plugin for OpenDeck with dedicated Record Screen and Record Window actions driving GPU Screen Recorder (gsr-ui-cli) with live /proc recording status and elapsed timer icons."
+status: draft
+created: 2026-10-23
+generated: { by: agent/antigravity, at: 2026-10-23T19:00:41Z }
+---
+
+# Feature Spec: GPU Screen Recorder 🎥
+
+An OpenAction plugin (`actions/gpu-screen-recorder/`) for OpenDeck and compatible control surfaces that integrates with **GPU Screen Recorder** (`gpu-screen-recorder` and its ShadowPlay-style daemon `gsr-ui`). The plugin provides two dedicated hardware button actions — **Record Screen** (whole monitor) and **Record Window** (single window via XDG Desktop Portal on Wayland or XComposite window capture on X11) — driving `gsr-ui` through `gsr-ui-cli` while polling `/proc` for live `gpu-screen-recorder` process telemetry so each button's icon and `MM:SS` elapsed duration timer stay accurately synchronized with real recording state.
+
+---
+
+## 🗺️ User Flow & Interface Design
+
+### 1. Actions & Hardware Key Interactions
+
+The plugin registers two Keypad actions under the `GPU Screen Recorder` category:
+
+1. **Record Screen (`io.github.mario.gpuscreenrecorder.record-screen`)**:
+   - **Press (`key_up`)**: Invokes `gsr-ui-cli toggle-record` to start or stop recording the configured monitor (`focused_monitor` / whole screen in `~/.config/gpu-screen-recorder/config_ui`).
+2. **Record Window (`io.github.mario.gpuscreenrecorder.record-window`)**:
+   - **Press (`key_up`)**: Invokes `gsr-ui-cli toggle-record-window` to start or stop recording an individual window (opens the native XDG Desktop Portal window picker on Wayland, or selects a window on X11).
+
+### 2. Button Face (144×144 Dynamic SVG Tile Rendering)
+
+Each button renders a 144×144 SVG data-URI tile reflecting live recording state:
+
+- **Record Screen Tile**:
+  - **Idle State**: Dark zinc card (`#18181b`) with a crisp widescreen monitor bezel and stand glyph in cool slate/teal (`#38bdf8` / `#94a3b8`) and an uppercase `SCREEN` footer label.
+  - **Recording State (`CaptureMode::Screen`)**: Illuminated crimson border/glow (`#ef4444`), active monitor glyph with a red recording badge (`● REC`), and a bold `MM:SS` (or `H:MM:SS` at $\ge 60\text{ min}$) elapsed duration counter.
+- **Record Window Tile**:
+  - **Idle State**: Dark zinc card (`#18181b`) with an application window frame glyph (title bar + window controls) in cool violet/indigo (`#a78bfa` / `#94a3b8`) and an uppercase `WINDOW` footer label.
+  - **Recording State (`CaptureMode::Window`)**: Illuminated crimson border/glow (`#ef4444`), active window glyph with a red recording badge (`● REC`), and a bold `MM:SS` (or `H:MM:SS`) elapsed duration counter.
+- **Error / Unreachable Daemon**:
+  - If `gsr-ui-cli` fails to spawn or exits non-zero (for example, when the `gsr-ui` background daemon is not running), the button triggers `instance.show_alert()` and renders its idle state.
+
+```
+   Idle (Record Screen)           Recording (Record Screen)
++-------------------------+     +-------------------------+
+|                         |     |  ● REC                  |
+|      +-----------+      |     |      +-----------+      |
+|      |           |      |     |      |   01:24   |      |
+|      +-----+-----+      |     |      +-----+-----+      |
+|          --+--          |     |          --+--          |
+|         SCREEN          |     |         SCREEN          |
++-------------------------+     +-------------------------+
+
+   Idle (Record Window)           Recording (Record Window)
++-------------------------+     +-------------------------+
+|                         |     |  ● REC                  |
+|      +-----------+      |     |      +-----------+      |
+|      | o o o     |      |     |      | o o o     |      |
+|      |           |      |     |      |   00:42   |      |
+|      +-----------+      |     |      +-----------+      |
+|         WINDOW          |     |         WINDOW          |
++-------------------------+     +-------------------------+
+```
+
+### 3. Property Inspector (Svelte Frontend)
+
+Both actions share a clean Svelte Property Inspector (`pi/`):
+- **`gsr-ui-cli` Binary Path**: Text input field bound to `settings.gsr_ui_cli_path`. Leaving it empty uses `gsr-ui-cli` on `PATH`.
+- **Daemon & Capture Status Readout**: On open (and via a "Check Status" refresh button), the PI sends `{"event": "getStatus"}` to the Rust plugin via `sendToPlugin`. The plugin checks `gsr-ui-cli status` and current `/proc` recording state, replying via `sendToPropertyInspector` with whether `gsr-ui` is running (`running` / `not running`) and whether a screen or window recording is currently active.
+
+---
+
+## ⚙️ Backend Models & API Endpoints
+
+The plugin performs no network I/O; it interacts locally with `gsr-ui-cli` and the Linux `/proc` filesystem.
+
+### 1. External CLI Commands (`gsr-ui-cli`)
+
+| Operation | Command | Expected Behavior |
+| :--- | :--- | :--- |
+| Toggle whole-screen recording | `<gsr-ui-cli> toggle-record` | Starts or stops regular monitor recording via `gsr-ui`; exits `0` on success, `1` if `gsr-ui` is not running. |
+| Toggle window recording | `<gsr-ui-cli> toggle-record-window` | Starts or stops window/portal recording via `gsr-ui`; exits `0` on success, `1` if `gsr-ui` is not running. |
+| Check daemon health | `<gsr-ui-cli> status` | Prints `running` and exits `0` when `gsr-ui` is listening on its socket; prints `not running` and exits `1` otherwise. |
+
+### 2. Live Recording Detection (`/proc` Inspection)
+
+Rather than relying on an optimistic boolean that drifts when recordings are started/stopped via `Alt+Z`, global hotkeys, or a canceled Wayland portal dialog, the plugin inspects running `gpu-screen-recorder` processes in `/proc`:
+
+```rust
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CaptureMode {
+    Screen,
+    Window,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ActiveRecording {
+    pub pid: u32,
+    pub mode: CaptureMode,
+    pub elapsed_secs: u64,
+}
+```
+
+#### Classification Rules for `/proc/<pid>/cmdline`:
+1. **Executable Match**: The argv0 basename is `gpu-screen-recorder`.
+2. **Active Regular Recording Filter**:
+   - Must contain `-w <source>` and `-o <output>`.
+   - Must **not** contain `-r` (which denotes a background replay-buffer session), unless `-ro` is also active.
+   - `<output>` must **not** be a live stream URL (`rtmp://`, `rtmps://`, `http://`, `https://`, `srt://`, `tcp://`, `udp://`).
+3. **Capture Mode Classification (`CaptureMode`)**:
+   - **`CaptureMode::Window`** when:
+     - `-w` is `window`, `focused`, or a numeric X11 window ID, **or**
+     - `-w` is `portal` and argv contains `-portal-session-token-filepath` pointing to a `gsr-ui-window-capture-token` path.
+   - **`CaptureMode::Screen`** for all other regular recording targets (`-w screen`, `-w screen-direct`, `-w <monitor_name>` such as `HDMI-A-1` or `DP-1`, `-w region`, or `-w portal` without the window-capture token).
+4. **Elapsed Duration Calculation**:
+   - Computed from the `/proc/<pid>` directory modification timestamp (`std::fs::metadata("/proc/<pid>").modified()`) relative to `SystemTime::now()`, formatted as `MM:SS` under 1 hour or `H:MM:SS` at 1 hour and above.
+5. **1 Hz Background Polling & Deduplicated Rendering**:
+   - A background Tokio task ticks every 500 ms while at least one button instance is visible, scanning `/proc` and pushing `instance.set_image(...)` only to instances whose visual state (`Idle` vs `Recording`, `mode`, or `elapsed_secs`) has changed since the last render.
+
+### 3. Persisted Action Settings Schema
+
+```rust
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Settings {
+    pub gsr_ui_cli_path: String,
+}
+```
+
+Persisted JSON payload:
+```json
+{
+  "gsr_ui_cli_path": ""
+}
+```
+
+---
+
+## 🛡️ Security & Role-Based Access Controls (RBAC)
+
+- **Zero Network / Zero Secrets**: The plugin executes local commands and reads `/proc` metadata only; no credentials, tokens, or network requests are used.
+- **Process Ownership & Safe Argument Handling**: `Command::new(effective_path)` passes subcommands (`toggle-record`, `toggle-record-window`, `status`) as discrete arguments without a shell (`sh -c`), preventing command injection from custom binary paths.
+- **Honest Failure Reporting**: Any failure to invoke `gsr-ui-cli` or a non-zero exit code (such as `gsr-ui` not running) immediately triggers `instance.show_alert()` on the hardware key rather than displaying a false recording state.
+
+---
+
+## 🧪 Verification & Acceptance Criteria
+
+### Automated Tests
+- Command to run plugin unit tests: `cargo test`
+- Command to run linter: `cargo clippy -- -D warnings`
+- Command to check formatting: `cargo fmt --check`
+- Command to build Property Inspector: `cd pi && npm run build`
+
+### Manual Acceptance Criteria (Pseudo-Gherkin)
+
+- **Scenario: Record Screen button starts and stops whole-screen recording**
+  - [ ] **Given** `gsr-ui` is running in the background and no recording is active
+  - [ ] **When** the user presses the **Record Screen** button
+  - [ ] **Then** the plugin runs `gsr-ui-cli toggle-record`, `gpu-screen-recorder` starts capturing the monitor, and the **Record Screen** button switches to the crimson recording icon with a live `MM:SS` elapsed timer
+  - [ ] **And When** the user presses the **Record Screen** button a second time
+  - [ ] **Then** `gsr-ui-cli toggle-record` stops and saves the recording, and the button returns to the idle screen icon
+
+- **Scenario: Record Window button starts and stops window recording**
+  - [ ] **Given** `gsr-ui` is running in the background and no recording is active
+  - [ ] **When** the user presses the **Record Window** button and selects a window in the portal/window picker
+  - [ ] **Then** the plugin runs `gsr-ui-cli toggle-record-window`, `gpu-screen-recorder` captures the selected window, and the **Record Window** button displays the crimson window recording icon with a live `MM:SS` elapsed timer
+  - [ ] **And When** the user presses the **Record Window** button again
+  - [ ] **Then** the window recording stops and saves, and the button returns to the idle window icon
+
+- **Scenario: Canceling the Wayland desktop portal picker returns button to idle**
+  - [ ] **Given** the user presses the **Record Window** button on Wayland and the XDG Desktop Portal dialog opens
+  - [ ] **When** the user cancels/dismisses the portal dialog without selecting a window
+  - [ ] **Then** `gpu-screen-recorder` exits and the **Record Window** button automatically returns to the idle state
+
+- **Scenario: External recording control via hotkey syncs button state**
+  - [ ] **Given** the **Record Screen** and **Record Window** buttons are visible on the device
+  - [ ] **When** the user starts or stops a recording externally via `gsr-ui` (`Alt+Z` overlay or global hotkey)
+  - [ ] **Then** the `/proc` watcher detects the `gpu-screen-recorder` process within 1 second and updates the corresponding button icon and `MM:SS` timer automatically
+
+- **Scenario: Replay buffer process is not mistaken for an active recording**
+  - [ ] **Given** `gpu-screen-recorder` is running in replay-buffer mode (`-r 60`) without an active regular recording
+  - [ ] **When** the `/proc` watcher evaluates running processes
+  - [ ] **Then** both **Record Screen** and **Record Window** buttons remain in their `Idle` state
+
+- **Scenario: Unreachable gsr-ui daemon or missing binary surfaces an alert**
+  - [ ] **Given** `gsr-ui` is not running or `gsr_ui_cli_path` points to a non-existent binary
+  - [ ] **When** the user presses either **Record Screen** or **Record Window**
+  - [ ] **Then** the button displays an alert (`show_alert`) and remains in the `Idle` state
+
+- **Scenario: Empty binary path resolves to default gsr-ui-cli**
+  - [ ] **Given** `gsr_ui_cli_path` is empty or whitespace in action settings
+  - [ ] **When** the plugin resolves the executable path
+  - [ ] **Then** it defaults to `gsr-ui-cli` on `PATH`
+
+---
+
+## 🔗 Traceability & Codebase Mapping
+
+### Created/Modified Files
+*Paths below are relative to `actions/gpu-screen-recorder/`.*
+- `[ ]` `Cargo.toml` -> Independent Rust crate manifest (`openaction`, `serde`, `serde_json`, `tokio`, `log`, `simplelog`).
+- `[ ]` `src/main.rs` -> OpenAction plugin entrypoint, registration of `RecordScreenAction` and `RecordWindowAction`, 1 Hz `/proc` watcher loop, and Property Inspector status messaging.
+- `[ ]` `src/gsr.rs` -> `gsr-ui-cli` path resolution, command execution (`toggle-record`, `toggle-record-window`, `status`), `/proc` cmdline parsing, `CaptureMode` classification, and elapsed duration formatting.
+- `[ ]` `src/icon.rs` -> Dynamic 144×144 SVG data-URI renderer for Screen and Window tiles (idle and active recording states with `MM:SS` / `H:MM:SS` timer readout).
+- `[ ]` `pi/` -> Svelte Property Inspector (`package.json`, `vite.config.ts`, `src/App.svelte`) for configuring `gsr_ui_cli_path` and viewing live `gsr-ui` daemon status.
+- `[ ]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/manifest.json` -> OpenAction manifest declaring the `Record Screen` and `Record Window` actions.
+- `[ ]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/icon.svg` -> Plugin category icon.
+- `[ ]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/actions/` -> Static action list icons (`record-screen.svg`, `record-window.svg`).
+- `[ ]` `scripts/package.sh`, `README.md` -> Build, packaging, and installation instructions.
+
+### Modified Repository Files
+- `[ ]` `specs/constitution/ROADMAP.md` -> Add the GPU Screen Recorder milestone under Phase 2: Power Utilities.
+- `[ ]` `specs/index.md` -> Register `007_gpu_screen_recorder.md`.
+- `[ ]` `README.md` -> Add GPU Screen Recorder to the root actions table.
+
+### Verification Assertions
+- `src/gsr.rs` and `src/icon.rs` reference `specs/007_gpu_screen_recorder.md` in their header comments.
+- `cargo test` covers binary path resolution, `gsr-ui-cli` command construction, `/proc` cmdline classification (screen vs. window vs. replay buffer vs. livestream), elapsed time formatting (`MM:SS` and `H:MM:SS`), and SVG tile rendering for both actions in idle and recording states.

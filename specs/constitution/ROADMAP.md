@@ -21,6 +21,7 @@ Each milestone maps to one action directory under `actions/<name>/` and one numb
 - `[x]` **[Hue Control](../003_hue_control.md)** (`actions/hue-control/`): Control Philips Hue lights and rooms from the pad over the Bridge local API — On/Off, Color, Color Cycle, Brightness, Brightness Relative, Temperature, and Scene — replacing the partially working Elgato plugin.
 - `[x]` **[Fleet Monitor](../004_fleet_monitor.md)** (`actions/fleet-monitor/`): Monitor multi-workspace Keel fleets, 4-state project health, cooperative cycling, and independent project views on device keys.
 - `[x]` **[Pomodoro Timer](../006_pomodoro_timer.md)** (`actions/pomodoro-timer/`): A Pomodoro technique workflow inspired by Pomotroid with custom SVG ring gauges, round tracking, and sound alerts.
+- `[ ]` **[GPU Screen Recorder](../007_gpu_screen_recorder.md)** (`actions/gpu-screen-recorder/`): Dedicated Record Screen and Record Window actions driving `gsr-ui-cli` with live `/proc` recording status and elapsed timer icons.
 
 ### Phase 3: Growth & Engagement (Priority: Low)
 - *(None scheduled.)*
