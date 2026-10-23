@@ -470,4 +470,21 @@ mod tests {
         assert_eq!(rec.pid, 2042);
         assert_eq!(rec.mode, CaptureMode::Window);
     }
+
+    #[test]
+    fn missing_or_failing_binary_returns_error_and_offline_status() {
+        let missing = "/nonexistent/path/to/gsr-ui-cli";
+        assert!(toggle_screen(missing).is_err());
+        assert!(toggle_window(missing).is_err());
+        assert!(!is_daemon_running(missing));
+        assert!(toggle_screen("false").is_err());
+        assert!(toggle_window("false").is_err());
+        assert!(!is_daemon_running("false"));
+    }
+
+    #[test]
+    fn succeeding_binary_completes_toggle_calls() {
+        assert!(toggle_screen("true").is_ok());
+        assert!(toggle_window("true").is_ok());
+    }
 }

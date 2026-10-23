@@ -12,6 +12,7 @@ A monorepo of custom [OpenAction](https://github.com/OpenActionAPI) plugins ("ac
 | **Fleet Monitor** | [`actions/fleet-monitor/`](actions/fleet-monitor/) | Monitor multi-workspace Keel fleets, 4-state project health, cooperative cycling, and independent project views on device keys. |
 | **Antigravity Usage** | [`actions/antigravity-usage/`](actions/antigravity-usage/) | Surface Google Antigravity model quota and credit telemetry on a button. |
 | **Pomodoro Timer** | [`actions/pomodoro-timer/`](actions/pomodoro-timer/) | Pomodoro technique workflow inspired by Pomotroid with custom SVG ring gauges, round tracking, and sound alerts. |
+| **GPU Screen Recorder** | [`actions/gpu-screen-recorder/`](actions/gpu-screen-recorder/) | Toggle whole-screen or single-window recording via `gsr-ui-cli` with live `/proc` status and elapsed `MM:SS` timer icons. |
 
 ## Repository Layout
 

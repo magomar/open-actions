@@ -3,9 +3,11 @@ type: Feature Spec
 template: feature
 title: "GPU Screen Recorder"
 description: "An OpenAction plugin for OpenDeck with dedicated Record Screen and Record Window actions driving GPU Screen Recorder (gsr-ui-cli) with live /proc recording status and elapsed timer icons."
-status: draft
+status: implemented
+receipt: "docs/receipts/spec-007-receipt.md"
 created: 2026-10-23
 generated: { by: agent/antigravity, at: 2026-10-23T19:00:41Z }
+verified: { by: human:mario, at: 2026-10-23T21:03:10Z, hash: "07b54219edda" }
 ---
 
 # Feature Spec: GPU Screen Recorder 🎥
@@ -154,43 +156,43 @@ Persisted JSON payload:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Record Screen button starts and stops whole-screen recording**
-  - [ ] **Given** `gsr-ui` is running in the background and no recording is active
-  - [ ] **When** the user presses the **Record Screen** button
-  - [ ] **Then** the plugin runs `gsr-ui-cli toggle-record`, `gpu-screen-recorder` starts capturing the monitor, and the **Record Screen** button switches to the crimson recording icon with a live `MM:SS` elapsed timer
-  - [ ] **And When** the user presses the **Record Screen** button a second time
-  - [ ] **Then** `gsr-ui-cli toggle-record` stops and saves the recording, and the button returns to the idle screen icon
+  - [x] **Given** `gsr-ui` is running in the background and no recording is active
+  - [x] **When** the user presses the **Record Screen** button
+  - [x] **Then** the plugin runs `gsr-ui-cli toggle-record`, `gpu-screen-recorder` starts capturing the monitor, and the **Record Screen** button switches to the crimson recording icon with a live `MM:SS` elapsed timer
+  - [x] **And When** the user presses the **Record Screen** button a second time
+  - [x] **Then** `gsr-ui-cli toggle-record` stops and saves the recording, and the button returns to the idle screen icon
 
 - **Scenario: Record Window button starts and stops window recording**
-  - [ ] **Given** `gsr-ui` is running in the background and no recording is active
-  - [ ] **When** the user presses the **Record Window** button and selects a window in the portal/window picker
-  - [ ] **Then** the plugin runs `gsr-ui-cli toggle-record-window`, `gpu-screen-recorder` captures the selected window, and the **Record Window** button displays the crimson window recording icon with a live `MM:SS` elapsed timer
-  - [ ] **And When** the user presses the **Record Window** button again
-  - [ ] **Then** the window recording stops and saves, and the button returns to the idle window icon
+  - [x] **Given** `gsr-ui` is running in the background and no recording is active
+  - [x] **When** the user presses the **Record Window** button and selects a window in the portal/window picker
+  - [x] **Then** the plugin runs `gsr-ui-cli toggle-record-window`, `gpu-screen-recorder` captures the selected window, and the **Record Window** button displays the crimson window recording icon with a live `MM:SS` elapsed timer
+  - [x] **And When** the user presses the **Record Window** button again
+  - [x] **Then** the window recording stops and saves, and the button returns to the idle window icon
 
 - **Scenario: Canceling the Wayland desktop portal picker returns button to idle**
-  - [ ] **Given** the user presses the **Record Window** button on Wayland and the XDG Desktop Portal dialog opens
-  - [ ] **When** the user cancels/dismisses the portal dialog without selecting a window
-  - [ ] **Then** `gpu-screen-recorder` exits and the **Record Window** button automatically returns to the idle state
+  - [x] **Given** the user presses the **Record Window** button on Wayland and the XDG Desktop Portal dialog opens
+  - [x] **When** the user cancels/dismisses the portal dialog without selecting a window
+  - [x] **Then** `gpu-screen-recorder` exits and the **Record Window** button automatically returns to the idle state
 
 - **Scenario: External recording control via hotkey syncs button state**
-  - [ ] **Given** the **Record Screen** and **Record Window** buttons are visible on the device
-  - [ ] **When** the user starts or stops a recording externally via `gsr-ui` (`Alt+Z` overlay or global hotkey)
-  - [ ] **Then** the `/proc` watcher detects the `gpu-screen-recorder` process within 1 second and updates the corresponding button icon and `MM:SS` timer automatically
+  - [x] **Given** the **Record Screen** and **Record Window** buttons are visible on the device
+  - [x] **When** the user starts or stops a recording externally via `gsr-ui` (`Alt+Z` overlay or global hotkey)
+  - [x] **Then** the `/proc` watcher detects the `gpu-screen-recorder` process within 1 second and updates the corresponding button icon and `MM:SS` timer automatically
 
 - **Scenario: Replay buffer process is not mistaken for an active recording**
-  - [ ] **Given** `gpu-screen-recorder` is running in replay-buffer mode (`-r 60`) without an active regular recording
-  - [ ] **When** the `/proc` watcher evaluates running processes
-  - [ ] **Then** both **Record Screen** and **Record Window** buttons remain in their `Idle` state
+  - [x] **Given** `gpu-screen-recorder` is running in replay-buffer mode (`-r 60`) without an active regular recording
+  - [x] **When** the `/proc` watcher evaluates running processes
+  - [x] **Then** both **Record Screen** and **Record Window** buttons remain in their `Idle` state
 
 - **Scenario: Unreachable gsr-ui daemon or missing binary surfaces an alert**
-  - [ ] **Given** `gsr-ui` is not running or `gsr_ui_cli_path` points to a non-existent binary
-  - [ ] **When** the user presses either **Record Screen** or **Record Window**
-  - [ ] **Then** the button displays an alert (`show_alert`) and remains in the `Idle` state
+  - [x] **Given** `gsr-ui` is not running or `gsr_ui_cli_path` points to a non-existent binary
+  - [x] **When** the user presses either **Record Screen** or **Record Window**
+  - [x] **Then** the button displays an alert (`show_alert`) and remains in the `Idle` state
 
 - **Scenario: Empty binary path resolves to default gsr-ui-cli**
-  - [ ] **Given** `gsr_ui_cli_path` is empty or whitespace in action settings
-  - [ ] **When** the plugin resolves the executable path
-  - [ ] **Then** it defaults to `gsr-ui-cli` on `PATH`
+  - [x] **Given** `gsr_ui_cli_path` is empty or whitespace in action settings
+  - [x] **When** the plugin resolves the executable path
+  - [x] **Then** it defaults to `gsr-ui-cli` on `PATH`
 
 ---
 
@@ -198,20 +200,20 @@ Persisted JSON payload:
 
 ### Created/Modified Files
 *Paths below are relative to `actions/gpu-screen-recorder/`.*
-- `[ ]` `Cargo.toml` -> Independent Rust crate manifest (`openaction`, `serde`, `serde_json`, `tokio`, `log`, `simplelog`).
-- `[ ]` `src/main.rs` -> OpenAction plugin entrypoint, registration of `RecordScreenAction` and `RecordWindowAction`, 1 Hz `/proc` watcher loop, and Property Inspector status messaging.
-- `[ ]` `src/gsr.rs` -> `gsr-ui-cli` path resolution, command execution (`toggle-record`, `toggle-record-window`, `status`), `/proc` cmdline parsing, `CaptureMode` classification, and elapsed duration formatting.
-- `[ ]` `src/icon.rs` -> Dynamic 144×144 SVG data-URI renderer for Screen and Window tiles (idle and active recording states with `MM:SS` / `H:MM:SS` timer readout).
-- `[ ]` `pi/` -> Svelte Property Inspector (`package.json`, `vite.config.ts`, `src/App.svelte`) for configuring `gsr_ui_cli_path` and viewing live `gsr-ui` daemon status.
-- `[ ]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/manifest.json` -> OpenAction manifest declaring the `Record Screen` and `Record Window` actions.
-- `[ ]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/icon.svg` -> Plugin category icon.
-- `[ ]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/actions/` -> Static action list icons (`record-screen.svg`, `record-window.svg`).
-- `[ ]` `scripts/package.sh`, `README.md` -> Build, packaging, and installation instructions.
+- `[x]` `Cargo.toml` -> Independent Rust crate manifest (`openaction`, `serde`, `serde_json`, `tokio`, `log`, `simplelog`).
+- `[x]` `src/main.rs` -> OpenAction plugin entrypoint, registration of `RecordScreenAction` and `RecordWindowAction`, 1 Hz `/proc` watcher loop, and Property Inspector status messaging.
+- `[x]` `src/gsr.rs` -> `gsr-ui-cli` path resolution, command execution (`toggle-record`, `toggle-record-window`, `status`), `/proc` cmdline parsing, `CaptureMode` classification, and elapsed duration formatting.
+- `[x]` `src/icon.rs` -> Dynamic 144×144 SVG data-URI renderer for Screen and Window tiles (idle and active recording states with `MM:SS` / `H:MM:SS` timer readout).
+- `[x]` `pi/` -> Svelte Property Inspector (`package.json`, `vite.config.ts`, `src/App.svelte`) for configuring `gsr_ui_cli_path` and viewing live `gsr-ui` daemon status.
+- `[x]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/manifest.json` -> OpenAction manifest declaring the `Record Screen` and `Record Window` actions.
+- `[x]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/icon.svg` -> Plugin category icon.
+- `[x]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/actions/` -> Static action list icons (`record-screen.svg`, `record-window.svg`).
+- `[x]` `scripts/package.sh`, `README.md` -> Build, packaging, and installation instructions.
 
 ### Modified Repository Files
-- `[ ]` `specs/constitution/ROADMAP.md` -> Add the GPU Screen Recorder milestone under Phase 2: Power Utilities.
-- `[ ]` `specs/index.md` -> Register `007_gpu_screen_recorder.md`.
-- `[ ]` `README.md` -> Add GPU Screen Recorder to the root actions table.
+- `[x]` `specs/constitution/ROADMAP.md` -> Add the GPU Screen Recorder milestone under Phase 2: Power Utilities.
+- `[x]` `specs/index.md` -> Register `007_gpu_screen_recorder.md`.
+- `[x]` `README.md` -> Add GPU Screen Recorder to the root actions table.
 
 ### Verification Assertions
 - `src/gsr.rs` and `src/icon.rs` reference `specs/007_gpu_screen_recorder.md` in their header comments.

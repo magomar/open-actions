@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">
+  <rect width="144" height="144" rx="24" fill="#18181b"/>
+  <rect x="24" y="34" width="72" height="54" rx="8" fill="#0f172a" stroke="#ef4444" stroke-width="5"/>
+  <path d="M96 50 L122 36 L122 86 L96 72 Z" fill="#ef4444"/>
+  <circle cx="60" cy="61" r="10" fill="#ef4444"/>
+  <text x="72" y="118" text-anchor="middle" fill="#f4f4f5" font-family="system-ui, sans-serif" font-size="18" font-weight="800" letter-spacing="2">GSR</text>
+</svg>

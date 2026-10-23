@@ -1,0 +1,28 @@
+{
+  "Name": "GPU Screen Recorder",
+  "Author": "mario",
+  "Version": "0.1.0",
+  "Category": "GPU Screen Recorder",
+  "Icon": "icon",
+  "OS": [{ "Platform": "linux" }],
+  "CodePathLin": "gpu-screen-recorder",
+  "PropertyInspectorPath": "pi/index.html",
+  "Actions": [
+    {
+      "UUID": "io.github.mario.gpuscreenrecorder.record-screen",
+      "Name": "Record Screen",
+      "Icon": "actions/record-screen",
+      "Tooltip": "Toggle GPU Screen Recorder whole-screen recording",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.gpuscreenrecorder.record-window",
+      "Name": "Record Window",
+      "Icon": "actions/record-window",
+      "Tooltip": "Toggle GPU Screen Recorder window/portal recording",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    }
+  ]
+}
