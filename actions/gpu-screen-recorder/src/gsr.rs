@@ -161,10 +161,7 @@ pub fn classify_cmdline(args: &[String]) -> Option<CaptureMode> {
         "--list-application-audio",
         "--list-v4l2-devices",
     ];
-    if args
-        .iter()
-        .any(|arg| info_flags.contains(&arg.as_str()))
-    {
+    if args.iter().any(|arg| info_flags.contains(&arg.as_str())) {
         return None;
     }
 
