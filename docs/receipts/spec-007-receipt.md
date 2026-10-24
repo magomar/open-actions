@@ -3,18 +3,18 @@ type: validation_receipt
 schema_version: "1.0"
 spec: "specs/007_gpu_screen_recorder.md"
 epic: "open-actions-sp007-iy2"
-candidate_commit: "ac3a4eaa5bb0f312b9edc9e3ee5adf382715e62c"
+candidate_commit: "d146b060fe90c1ed6c0ea29202ad01cae9a6b591"
 verifier: "local-user"
-evaluated_at: "2026-10-23T21:57:01Z"
+evaluated_at: "2026-10-24T18:05:33Z"
 command: "cargo test --manifest-path actions/gpu-screen-recorder/Cargo.toml"
 exit_code: 0
-duration_ms: 66
+duration_ms: 138
 status: passed
 ---
 
 # 🧾 Validation Receipt: Spec 007
 
-- **Candidate Commit**: `ac3a4eaa5bb0f312b9edc9e3ee5adf382715e62c`
+- **Candidate Commit**: `d146b060fe90c1ed6c0ea29202ad01cae9a6b591`
 - **Spec**: `specs/007_gpu_screen_recorder.md`
 - **Command**: `cargo test --manifest-path actions/gpu-screen-recorder/Cargo.toml`
 - **Result**: `passed` (exit code: 0)
@@ -26,28 +26,29 @@ This receipt records only the explicit command result. It does not assert covera
 ```
 stdout:
 
-running 15 tests
+running 16 tests
 test gsr::tests::classifies_monitor_and_screen_targets_as_screen_mode ... ok
-test gsr::tests::classifies_wayland_portal_window_token_and_x11_window_as_window_mode ... ok
 test gsr::tests::constructs_toggle_record_and_window_commands ... ok
+test gsr::tests::classifies_wayland_portal_window_token_and_x11_window_as_window_mode ... ok
 test gsr::tests::formats_elapsed_duration_as_mm_ss_and_h_mm_ss ... ok
 test gsr::tests::ignores_replay_buffer_streaming_screenshots_and_info_commands ... ok
 test gsr::tests::parses_nul_separated_cmdline_bytes ... ok
 test gsr::tests::detects_active_recording_from_mock_proc_directory ... ok
-test gsr::tests::resolves_empty_path_to_default_binary ... ok
 test gsr::tests::preserves_configured_custom_path ... ok
+test gsr::tests::resolves_daemon_binary_path_and_launch_command ... ok
+test gsr::tests::resolves_empty_path_to_default_binary ... ok
 test icon::tests::recording_svgs_include_formatted_time_and_rec_badge ... ok
 test tests::elapsed_for_action_matches_only_matching_capture_mode ... ok
 test tests::settings_deserialize_with_default_empty_path ... ok
 test icon::tests::renders_all_states_as_svg_data_uris ... ok
-test gsr::tests::succeeding_binary_completes_toggle_calls ... ok
 test gsr::tests::missing_or_failing_binary_returns_error_and_offline_status ... ok
+test gsr::tests::auto_launches_daemon_when_not_running_and_completes_toggle ... ok
 
-test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
 
 
 stderr:
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
      Running unittests src/main.rs (actions/gpu-screen-recorder/target/debug/deps/gpu_screen_recorder-820b8f25ada27f1c)
 
 ```
