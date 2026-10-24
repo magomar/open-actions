@@ -9,7 +9,7 @@ An OpenAction plugin for OpenDeck that controls [GPU Screen Recorder](https://gi
 
 ## Prerequisites
 
-- `gpu-screen-recorder` and `gpu-screen-recorder-ui` (`gsr-ui` + `gsr-ui-cli`) installed, with `gsr-ui` running in the background (`gsr-ui launch-daemon`).
+- `gpu-screen-recorder` and `gpu-screen-recorder-ui` (`gsr-ui` + `gsr-ui-cli`) installed. If `gsr-ui` is not already running, the plugin automatically launches `gsr-ui launch-daemon` in the background.
 
 ## Building & Packaging
 

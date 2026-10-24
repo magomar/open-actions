@@ -3,12 +3,14 @@ use std::{
     fs, io,
     path::Path,
     process::{Command, Stdio},
-    time::SystemTime,
+    thread,
+    time::{Duration, SystemTime},
 };
 
 use serde::{Deserialize, Serialize};
 
 pub const DEFAULT_BINARY: &str = "gsr-ui-cli";
+pub const DEFAULT_DAEMON_BINARY: &str = "gsr-ui";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -31,6 +33,29 @@ pub fn effective_path(configured: &str) -> &str {
     } else {
         path
     }
+}
+
+pub fn effective_daemon_path(configured_cli: &str) -> String {
+    let cli = effective_path(configured_cli);
+    let path = Path::new(cli);
+    if let Some(parent) = path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        return parent
+            .join(DEFAULT_DAEMON_BINARY)
+            .to_string_lossy()
+            .into_owned();
+    }
+    DEFAULT_DAEMON_BINARY.to_string()
+}
+
+pub fn launch_daemon_command(configured_cli: &str) -> Command {
+    let mut command = Command::new(effective_daemon_path(configured_cli));
+    command.arg("launch-daemon");
+    command.stdin(Stdio::null());
+    command.stdout(Stdio::null());
+    command.stderr(Stdio::null());
+    command
 }
 
 pub fn toggle_record_command(configured: &str) -> Command {
@@ -71,11 +96,31 @@ fn run_checked(mut command: Command) -> io::Result<()> {
     }
 }
 
+pub fn ensure_daemon_running(configured: &str) -> io::Result<()> {
+    if is_daemon_running(configured) {
+        return Ok(());
+    }
+
+    let _child = launch_daemon_command(configured).spawn()?;
+    for _ in 0..30 {
+        thread::sleep(Duration::from_millis(100));
+        if is_daemon_running(configured) {
+            return Ok(());
+        }
+    }
+
+    Err(io::Error::other(
+        "timed out waiting for gsr-ui daemon to start",
+    ))
+}
+
 pub fn toggle_screen(configured: &str) -> io::Result<()> {
+    ensure_daemon_running(configured)?;
     run_checked(toggle_record_command(configured))
 }
 
 pub fn toggle_window(configured: &str) -> io::Result<()> {
+    ensure_daemon_running(configured)?;
     run_checked(toggle_record_window_command(configured))
 }
 
@@ -477,14 +522,69 @@ mod tests {
         assert!(toggle_screen(missing).is_err());
         assert!(toggle_window(missing).is_err());
         assert!(!is_daemon_running(missing));
-        assert!(toggle_screen("false").is_err());
-        assert!(toggle_window("false").is_err());
         assert!(!is_daemon_running("false"));
     }
 
     #[test]
-    fn succeeding_binary_completes_toggle_calls() {
-        assert!(toggle_screen("true").is_ok());
-        assert!(toggle_window("true").is_ok());
+    fn resolves_daemon_binary_path_and_launch_command() {
+        assert_eq!(effective_daemon_path(""), "gsr-ui");
+        assert_eq!(effective_daemon_path("gsr-ui-cli"), "gsr-ui");
+        assert_eq!(
+            effective_daemon_path("/opt/gsr/bin/gsr-ui-cli"),
+            "/opt/gsr/bin/gsr-ui"
+        );
+
+        let cmd = launch_daemon_command("/opt/gsr/bin/gsr-ui-cli");
+        assert_eq!(cmd.get_program(), "/opt/gsr/bin/gsr-ui");
+        assert_eq!(cmd.get_args().collect::<Vec<_>>(), vec!["launch-daemon"]);
+    }
+
+    #[test]
+    fn auto_launches_daemon_when_not_running_and_completes_toggle() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = std::env::temp_dir().join(format!("gsr_autolaunch_test_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&temp);
+        fs::create_dir_all(&temp).unwrap();
+
+        let state_file = temp.join("daemon_running");
+        let log_file = temp.join("invocations.log");
+        let daemon_bin = temp.join("gsr-ui");
+        let cli_bin = temp.join("gsr-ui-cli");
+
+        let daemon_script = format!(
+            "#!/bin/sh\nif [ \"$1\" = \"launch-daemon\" ]; then\n  echo \"launched\" >> \"{}\"\n  touch \"{}\"\n  exit 0\nfi\nexit 1\n",
+            log_file.display(),
+            state_file.display()
+        );
+        fs::write(&daemon_bin, daemon_script).unwrap();
+        fs::set_permissions(&daemon_bin, fs::Permissions::from_mode(0o755)).unwrap();
+
+        let cli_script = format!(
+            "#!/bin/sh\nif [ \"$1\" = \"status\" ]; then\n  if [ -f \"{}\" ]; then\n    echo \"running\"\n    exit 0\n  else\n    echo \"not running\"\n    exit 1\n  fi\nfi\necho \"$1\" >> \"{}\"\nexit 0\n",
+            state_file.display(),
+            log_file.display()
+        );
+        fs::write(&cli_bin, cli_script).unwrap();
+        fs::set_permissions(&cli_bin, fs::Permissions::from_mode(0o755)).unwrap();
+
+        let cli_str = cli_bin.to_str().unwrap();
+        assert!(!is_daemon_running(cli_str));
+
+        // First toggle_screen should detect daemon is not running, auto-launch gsr-ui launch-daemon, and then run toggle-record
+        assert!(toggle_screen(cli_str).is_ok());
+        assert!(is_daemon_running(cli_str));
+
+        // Second call (toggle_window) should see daemon is already running and run toggle-record-window directly
+        assert!(toggle_window(cli_str).is_ok());
+
+        let log = fs::read_to_string(&log_file).unwrap();
+        let lines: Vec<&str> = log.lines().collect();
+        assert_eq!(
+            lines,
+            vec!["launched", "toggle-record", "toggle-record-window"]
+        );
+
+        let _ = fs::remove_dir_all(&temp);
     }
 }

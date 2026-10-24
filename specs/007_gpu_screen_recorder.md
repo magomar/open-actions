@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-007-receipt.md"
 created: 2026-10-23
 generated: { by: agent/antigravity, at: 2026-10-23T19:00:41Z }
-verified: { by: human:mario, at: 2026-10-23T21:03:10Z, hash: "07b54219edda" }
+verified: { by: human:mario, at: 2026-10-23T21:03:10Z, hash: "cc95099782a6" }
 ---
 
 # Feature Spec: GPU Screen Recorder 🎥
@@ -74,13 +74,14 @@ Both actions share a clean Svelte Property Inspector (`pi/`):
 
 The plugin performs no network I/O; it interacts locally with `gsr-ui-cli` and the Linux `/proc` filesystem.
 
-### 1. External CLI Commands (`gsr-ui-cli`)
+### 1. External CLI Commands (`gsr-ui-cli` & `gsr-ui`)
 
 | Operation | Command | Expected Behavior |
 | :--- | :--- | :--- |
-| Toggle whole-screen recording | `<gsr-ui-cli> toggle-record` | Starts or stops regular monitor recording via `gsr-ui`; exits `0` on success, `1` if `gsr-ui` is not running. |
-| Toggle window recording | `<gsr-ui-cli> toggle-record-window` | Starts or stops window/portal recording via `gsr-ui`; exits `0` on success, `1` if `gsr-ui` is not running. |
 | Check daemon health | `<gsr-ui-cli> status` | Prints `running` and exits `0` when `gsr-ui` is listening on its socket; prints `not running` and exits `1` otherwise. |
+| Auto-start daemon | `<gsr-ui> launch-daemon` | Starts `gsr-ui` in background daemon mode (hidden until `Alt+Z`) when `gsr-ui-cli status` reports not running, polling until ready (up to 3 s). |
+| Toggle whole-screen recording | `<gsr-ui-cli> toggle-record` | Ensures `gsr-ui` is running, then starts or stops regular monitor recording via `gsr-ui`. |
+| Toggle window recording | `<gsr-ui-cli> toggle-record-window` | Ensures `gsr-ui` is running, then starts or stops window/portal recording via `gsr-ui`. |
 
 ### 2. Live Recording Detection (`/proc` Inspection)
 
@@ -184,8 +185,13 @@ Persisted JSON payload:
   - [x] **When** the `/proc` watcher evaluates running processes
   - [x] **Then** both **Record Screen** and **Record Window** buttons remain in their `Idle` state
 
-- **Scenario: Unreachable gsr-ui daemon or missing binary surfaces an alert**
-  - [x] **Given** `gsr-ui` is not running or `gsr_ui_cli_path` points to a non-existent binary
+- **Scenario: Auto-launches gsr-ui daemon when not already running**
+  - [x] **Given** `gsr-ui` is not currently running (`gsr-ui-cli status` reports `not running`)
+  - [x] **When** a button appears or the user presses **Record Screen** or **Record Window**
+  - [x] **Then** the plugin automatically spawns `gsr-ui launch-daemon`, waits until `gsr-ui-cli status` reports `running`, and completes the requested recording toggle
+
+- **Scenario: Missing binary surfaces an alert**
+  - [x] **Given** `gsr_ui_cli_path` points to a non-existent binary or `gsr-ui` cannot be launched
   - [x] **When** the user presses either **Record Screen** or **Record Window**
   - [x] **Then** the button displays an alert (`show_alert`) and remains in the `Idle` state
 

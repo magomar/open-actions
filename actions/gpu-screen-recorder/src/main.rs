@@ -50,7 +50,13 @@ impl GsrCore {
         &self,
         instance: &Instance,
         mode: CaptureMode,
+        settings: &Settings,
     ) -> OpenActionResult<()> {
+        let cli_path = settings.gsr_ui_cli_path.clone();
+        tokio::task::spawn_blocking(move || {
+            let _ = gsr::ensure_daemon_running(&cli_path);
+        });
+
         {
             let mut map = self.instances.lock().await;
             map.insert(
@@ -184,10 +190,10 @@ impl Action for RecordScreenAction {
     async fn will_appear(
         &self,
         instance: &Instance,
-        _settings: &Self::Settings,
+        settings: &Self::Settings,
     ) -> OpenActionResult<()> {
         self.core
-            .upsert_instance(instance, CaptureMode::Screen)
+            .upsert_instance(instance, CaptureMode::Screen, settings)
             .await
     }
 
@@ -203,10 +209,10 @@ impl Action for RecordScreenAction {
     async fn did_receive_settings(
         &self,
         instance: &Instance,
-        _settings: &Self::Settings,
+        settings: &Self::Settings,
     ) -> OpenActionResult<()> {
         self.core
-            .upsert_instance(instance, CaptureMode::Screen)
+            .upsert_instance(instance, CaptureMode::Screen, settings)
             .await
     }
 
@@ -240,10 +246,10 @@ impl Action for RecordWindowAction {
     async fn will_appear(
         &self,
         instance: &Instance,
-        _settings: &Self::Settings,
+        settings: &Self::Settings,
     ) -> OpenActionResult<()> {
         self.core
-            .upsert_instance(instance, CaptureMode::Window)
+            .upsert_instance(instance, CaptureMode::Window, settings)
             .await
     }
 
@@ -259,10 +265,10 @@ impl Action for RecordWindowAction {
     async fn did_receive_settings(
         &self,
         instance: &Instance,
-        _settings: &Self::Settings,
+        settings: &Self::Settings,
     ) -> OpenActionResult<()> {
         self.core
-            .upsert_instance(instance, CaptureMode::Window)
+            .upsert_instance(instance, CaptureMode::Window, settings)
             .await
     }
 
