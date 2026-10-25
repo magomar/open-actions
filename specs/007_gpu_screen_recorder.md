@@ -23,9 +23,9 @@ An OpenAction plugin (`actions/gpu-screen-recorder/`) for OpenDeck and compatibl
 The plugin registers two Keypad actions under the `GPU Screen Recorder` category:
 
 1. **Record Screen (`io.github.mario.gpuscreenrecorder.record-screen`)**:
-   - **Press (`key_up`)**: Invokes `gsr-ui-cli toggle-record` to start or stop recording the configured monitor (`focused_monitor` / whole screen in `~/.config/gpu-screen-recorder/config_ui`).
+   - **Press (`key_up`)**: Starts or stops recording the primary monitor (`gpu-screen-recorder -w <monitor>`) using the user's preferences in `~/.config/gpu-screen-recorder/config_ui`.
 2. **Record Window (`io.github.mario.gpuscreenrecorder.record-window`)**:
-   - **Press (`key_up`)**: Invokes `gsr-ui-cli toggle-record-window` to start or stop recording an individual window (opens the native XDG Desktop Portal window picker on Wayland, or selects a window on X11).
+   - **Press (`key_up`)**: Automatically starts or stops recording the currently focused window (queries `org.gnome.Shell.Introspect.GetWindows` and seeds `org.freedesktop.impl.portal.PermissionStore` with a restore token on Wayland, or uses `-w focused` on X11, without requiring an interactive window picker dialog).
 
 ### 2. Button Face (144×144 Dynamic SVG Tile Rendering)
 
@@ -74,14 +74,14 @@ Both actions share a clean Svelte Property Inspector (`pi/`):
 
 The plugin performs no network I/O; it interacts locally with `gsr-ui-cli` and the Linux `/proc` filesystem.
 
-### 1. External CLI Commands (`gsr-ui-cli` & `gsr-ui`)
+### 1. External CLI Commands (`gpu-screen-recorder`, `gsr-ui-cli`, & `gsr-ui`)
 
 | Operation | Command | Expected Behavior |
 | :--- | :--- | :--- |
 | Check daemon health | `<gsr-ui-cli> status` | Prints `running` and exits `0` when `gsr-ui` is listening on its socket; prints `not running` and exits `1` otherwise. |
 | Auto-start daemon | `<gsr-ui> launch-daemon` | Starts `gsr-ui` in background daemon mode (hidden until `Alt+Z`) when `gsr-ui-cli status` reports not running, polling until ready (up to 3 s). |
-| Toggle whole-screen recording | `<gsr-ui-cli> toggle-record` | Ensures `gsr-ui` is running, then starts or stops regular monitor recording via `gsr-ui`. |
-| Toggle window recording | `<gsr-ui-cli> toggle-record-window` | Ensures `gsr-ui` is running, then starts or stops window/portal recording via `gsr-ui`. |
+| Toggle whole-screen recording | `<gpu-screen-recorder> -w <monitor> ... -o <file>` | Starts whole-screen recording using settings from `~/.config/gpu-screen-recorder/config_ui`, or stops an active recording via `SIGINT`. |
+| Toggle focused-window recording | `<gpu-screen-recorder> -w portal -restore-portal-session yes -portal-session-token-filepath /tmp/gsr-open-actions-window-token ...` | Automatically captures the currently focused window on Wayland (via GNOME Shell Introspect + `PermissionStore` token) or X11 (`-w focused`), or stops an active recording via `SIGINT`. |
 
 ### 2. Live Recording Detection (`/proc` Inspection)
 

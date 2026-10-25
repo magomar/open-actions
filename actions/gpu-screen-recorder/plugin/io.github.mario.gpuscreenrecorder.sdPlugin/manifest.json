@@ -5,7 +5,7 @@
   "Category": "GPU Screen Recorder",
   "Icon": "icon",
   "OS": [{ "Platform": "linux" }],
-  "CodePathLin": "gpu-screen-recorder",
+  "CodePathLin": "open-actions-gsr",
   "PropertyInspectorPath": "pi/index.html",
   "Actions": [
     {
@@ -20,7 +20,7 @@
       "UUID": "io.github.mario.gpuscreenrecorder.record-window",
       "Name": "Record Window",
       "Icon": "actions/record-window",
-      "Tooltip": "Toggle GPU Screen Recorder window/portal recording",
+      "Tooltip": "Toggle GPU Screen Recorder focused-window recording",
       "Controllers": ["Keypad"],
       "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
     }

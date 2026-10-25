@@ -1,11 +1,11 @@
 # GPU Screen Recorder (`actions/gpu-screen-recorder/`)
 
-An OpenAction plugin for OpenDeck that controls [GPU Screen Recorder](https://git.dec05eba.com/gpu-screen-recorder/about/) (`gsr-ui`) via `gsr-ui-cli` and displays live recording status and elapsed `MM:SS` duration by inspecting `/proc`.
+An OpenAction plugin for OpenDeck that controls [GPU Screen Recorder](https://git.dec05eba.com/gpu-screen-recorder/about/) (`gpu-screen-recorder` and `gsr-ui`) and displays live recording status and elapsed `MM:SS` duration by inspecting `/proc`.
 
 ## Actions
 
-- **Record Screen** (`io.github.mario.gpuscreenrecorder.record-screen`): Toggles whole-screen / monitor recording (`gsr-ui-cli toggle-record`).
-- **Record Window** (`io.github.mario.gpuscreenrecorder.record-window`): Toggles window recording (`gsr-ui-cli toggle-record-window` — opens the XDG Desktop Portal window picker on Wayland, or selects a window on X11).
+- **Record Screen** (`io.github.mario.gpuscreenrecorder.record-screen`): Toggles whole-screen / monitor recording (`gpu-screen-recorder -w <monitor>`).
+- **Record Window** (`io.github.mario.gpuscreenrecorder.record-window`): Automatically toggles recording of the currently focused window (using GNOME Shell `Introspect` + XDG Desktop Portal session restore on Wayland, or `-w focused` on X11).
 
 ## Prerequisites
 
