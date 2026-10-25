@@ -37,12 +37,14 @@ pub fn elapsed_for_action(
 
 struct GsrCore {
     instances: Mutex<HashMap<String, InstanceEntry>>,
+    toggle_lock: Mutex<()>,
 }
 
 impl GsrCore {
     fn new() -> Self {
         Self {
             instances: Mutex::new(HashMap::new()),
+            toggle_lock: Mutex::new(()),
         }
     }
 
@@ -119,6 +121,7 @@ impl GsrCore {
         mode: CaptureMode,
         settings: &Settings,
     ) -> OpenActionResult<()> {
+        let _guard = self.toggle_lock.lock().await;
         let path = settings.gsr_ui_cli_path.clone();
         let result = tokio::task::spawn_blocking(move || match mode {
             CaptureMode::Screen => gsr::toggle_screen(&path),

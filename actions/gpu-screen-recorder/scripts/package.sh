@@ -3,8 +3,9 @@ set -eu
 
 cd "$(dirname "$0")/.."
 cargo build --release
-cp target/release/gpu-screen-recorder plugin/io.github.mario.gpuscreenrecorder.sdPlugin/gpu-screen-recorder
-chmod +x plugin/io.github.mario.gpuscreenrecorder.sdPlugin/gpu-screen-recorder
+rm -f plugin/io.github.mario.gpuscreenrecorder.sdPlugin/gpu-screen-recorder
+cp target/release/open-actions-gsr plugin/io.github.mario.gpuscreenrecorder.sdPlugin/open-actions-gsr
+chmod +x plugin/io.github.mario.gpuscreenrecorder.sdPlugin/open-actions-gsr
 (cd pi && npm run build)
 
 BUNDLE=plugin/io.github.mario.gpuscreenrecorder.sdPlugin
