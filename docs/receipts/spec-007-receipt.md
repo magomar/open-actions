@@ -3,18 +3,18 @@ type: validation_receipt
 schema_version: "1.0"
 spec: "specs/007_gpu_screen_recorder.md"
 epic: "open-actions-sp007-iy2"
-candidate_commit: "8b5f0fe6e51fcd475d73485e4ee5b4d16c986f6a"
+candidate_commit: "95f8217d80a313faaa39ae8c49933494a23fdcb5"
 verifier: "local-user"
-evaluated_at: "2026-10-25T13:50:04Z"
+evaluated_at: "2026-10-25T17:41:39Z"
 command: "cargo test --manifest-path actions/gpu-screen-recorder/Cargo.toml"
 exit_code: 0
-duration_ms: 546
+duration_ms: 540
 status: passed
 ---
 
 # 🧾 Validation Receipt: Spec 007
 
-- **Candidate Commit**: `8b5f0fe6e51fcd475d73485e4ee5b4d16c986f6a`
+- **Candidate Commit**: `95f8217d80a313faaa39ae8c49933494a23fdcb5`
 - **Spec**: `specs/007_gpu_screen_recorder.md`
 - **Command**: `cargo test --manifest-path actions/gpu-screen-recorder/Cargo.toml`
 - **Result**: `passed` (exit code: 0)
@@ -33,10 +33,10 @@ test gsr::tests::constructs_status_command ... ok
 test gsr::tests::formats_elapsed_duration_as_mm_ss_and_h_mm_ss ... ok
 test gsr::tests::ignores_replay_buffer_streaming_screenshots_and_info_commands ... ok
 test gsr::tests::parses_nul_separated_cmdline_bytes ... ok
-test gsr::tests::detects_active_recording_from_mock_proc_directory ... ok
 test gsr::tests::preserves_configured_custom_path ... ok
-test gsr::tests::parses_ui_config_and_builds_recorder_command ... ok
+test gsr::tests::detects_active_recording_from_mock_proc_directory ... ok
 test gsr::tests::resolves_daemon_binary_path_and_launch_command ... ok
+test gsr::tests::parses_ui_config_and_builds_recorder_command ... ok
 test gsr::tests::resolves_empty_path_to_default_binary ... ok
 test icon::tests::recording_svgs_include_formatted_time_and_rec_badge ... ok
 test tests::elapsed_for_action_matches_only_matching_capture_mode ... ok
