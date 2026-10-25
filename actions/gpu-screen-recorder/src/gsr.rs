@@ -146,6 +146,7 @@ pub fn effective_recorder_path(configured_cli: &str) -> String {
 pub fn launch_daemon_command(configured_cli: &str) -> Command {
     let mut command = Command::new(effective_daemon_path(configured_cli));
     command.arg("launch-daemon");
+    command.current_dir("/tmp");
     command.stdin(Stdio::null());
     command.stdout(Stdio::null());
     command.stderr(Stdio::null());
@@ -155,6 +156,7 @@ pub fn launch_daemon_command(configured_cli: &str) -> Command {
 pub fn status_command(configured: &str) -> Command {
     let mut command = Command::new(effective_path(configured));
     command.arg("status");
+    command.current_dir("/tmp");
     command.stdin(Stdio::null());
     command.stdout(Stdio::piped());
     command.stderr(Stdio::null());
@@ -228,6 +230,7 @@ pub fn load_ui_config() -> GsrUiConfig {
 pub fn detect_primary_monitor(recorder_bin: &str) -> String {
     let output = Command::new(recorder_bin)
         .arg("--list-monitors")
+        .current_dir("/tmp")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -253,6 +256,7 @@ pub fn detect_primary_monitor(recorder_bin: &str) -> String {
 fn current_timestamp_string() -> String {
     if let Ok(out) = Command::new("date")
         .arg("+%Y-%m-%d_%H-%M-%S")
+        .current_dir("/tmp")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -385,6 +389,7 @@ pub fn build_recorder_command(
     }
 
     command.arg("-o").arg(output_file);
+    command.current_dir("/tmp");
     command.stdin(Stdio::null());
     command.stdout(Stdio::null());
     command.stderr(Stdio::null());
@@ -439,11 +444,14 @@ windows = res.unpack()[0]
 focused = None
 fallback = None
 for _wid, props in windows.items():
+    app = str(props.get('app-id', ''))
+    if app == 'gsr-ui':
+        continue
     if props.get('has-focus'):
-        focused = (str(props.get('app-id', '')), str(props.get('title', '')))
+        focused = (app, str(props.get('title', '')))
         break
-    if fallback is None and props.get('window-type', 0) == 0:
-        fallback = (str(props.get('app-id', '')), str(props.get('title', '')))
+    if fallback is None and props.get('window-type', 0) == 0 and not props.get('is-hidden', False):
+        fallback = (app, str(props.get('title', '')))
 
 target = focused or fallback
 if not target:
@@ -502,9 +510,11 @@ print(title or app_id)
 
 pub fn prepare_wayland_focused_window_token(token_path: &Path) -> io::Result<String> {
     let output = Command::new("python3")
+        .arg("-P")
         .arg("-c")
         .arg(WAYLAND_FOCUSED_WINDOW_HELPER_PY)
         .arg(token_path)
+        .current_dir("/tmp")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -536,6 +546,7 @@ fn notify_recording_event(config: &GsrUiConfig, text: &str) {
     }
     let _ = Command::new(DEFAULT_NOTIFY_BINARY)
         .args(["--text", text, "--timeout", "2.0", "--icon", "record"])
+        .current_dir("/tmp")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -565,6 +576,7 @@ fn spawn_and_verify(mut command: Command) -> io::Result<u32> {
 pub fn stop_active_recording_in(proc_root: &Path, pid: u32) -> io::Result<()> {
     let status = Command::new("kill")
         .args(["-s", "INT", &pid.to_string()])
+        .current_dir("/tmp")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
