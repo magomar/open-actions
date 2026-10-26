@@ -3,18 +3,18 @@ type: validation_receipt
 schema_version: "1.0"
 spec: "specs/007_gpu_screen_recorder.md"
 epic: "open-actions-sp007-iy2"
-candidate_commit: "5713e162b88a4855c70f6b428b5ccd24d8b213a4"
+candidate_commit: "b7b2fb13a8212d0b095622e6dd725187e3438bba"
 verifier: "local-user"
-evaluated_at: "2026-10-26T07:37:15Z"
+evaluated_at: "2026-10-26T07:38:00Z"
 command: "cargo test --manifest-path actions/gpu-screen-recorder/Cargo.toml"
 exit_code: 0
-duration_ms: 541
+duration_ms: 540
 status: passed
 ---
 
 # 🧾 Validation Receipt: Spec 007
 
-- **Candidate Commit**: `5713e162b88a4855c70f6b428b5ccd24d8b213a4`
+- **Candidate Commit**: `b7b2fb13a8212d0b095622e6dd725187e3438bba`
 - **Spec**: `specs/007_gpu_screen_recorder.md`
 - **Command**: `cargo test --manifest-path actions/gpu-screen-recorder/Cargo.toml`
 - **Result**: `passed` (exit code: 0)
@@ -33,17 +33,17 @@ test gsr::tests::constructs_status_command ... ok
 test gsr::tests::formats_elapsed_duration_as_mm_ss_and_h_mm_ss ... ok
 test gsr::tests::ignores_replay_buffer_streaming_screenshots_and_info_commands ... ok
 test gsr::tests::detects_active_recording_from_mock_proc_directory ... ok
+test gsr::tests::detects_and_kills_background_processes_in_mock_proc ... ok
 test gsr::tests::parses_nul_separated_cmdline_bytes ... ok
 test gsr::tests::preserves_configured_custom_path ... ok
-test gsr::tests::detects_and_kills_background_processes_in_mock_proc ... ok
 test gsr::tests::resolves_daemon_binary_path_and_launch_command ... ok
-test gsr::tests::parses_ui_config_and_builds_recorder_command ... ok
 test gsr::tests::resolves_empty_path_to_default_binary ... ok
+test gsr::tests::parses_ui_config_and_builds_recorder_command ... ok
 test tests::computes_rendered_state_for_capture_and_daemon_actions ... ok
 test icon::tests::recording_svgs_include_formatted_time_and_rec_badge ... ok
+test icon::tests::renders_all_states_as_svg_data_uris ... ok
 test tests::elapsed_for_action_matches_only_matching_capture_mode ... ok
 test tests::settings_deserialize_with_default_empty_path ... ok
-test icon::tests::renders_all_states_as_svg_data_uris ... ok
 test gsr::tests::missing_or_failing_binary_returns_error_and_offline_status ... ok
 test gsr::tests::auto_launches_daemon_and_starts_and_stops_recorder_process ... ok
 
