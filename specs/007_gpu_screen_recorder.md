@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-007-receipt.md"
 created: 2026-10-23
 generated: { by: agent/antigravity, at: 2026-10-23T19:00:41Z }
-verified: { by: human:mario, at: 2026-10-23T21:03:10Z, hash: "cc95099782a6" }
+verified: { by: human:mario, at: 2026-10-26T08:37:00Z, hash: "185f124ecef6" }
 ---
 
 # Feature Spec: GPU Screen Recorder 🎥
