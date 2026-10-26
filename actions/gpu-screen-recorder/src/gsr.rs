@@ -168,7 +168,10 @@ pub fn ensure_daemon_running(configured: &str) -> io::Result<()> {
         return Ok(());
     }
 
-    let _child = launch_daemon_command(configured).spawn()?;
+    let mut child = launch_daemon_command(configured).spawn()?;
+    thread::spawn(move || {
+        let _ = child.wait();
+    });
     for _ in 0..30 {
         thread::sleep(Duration::from_millis(100));
         if is_daemon_running(configured) {
@@ -182,6 +185,10 @@ pub fn ensure_daemon_running(configured: &str) -> io::Result<()> {
 }
 
 pub fn is_daemon_running(configured: &str) -> bool {
+    let trimmed = configured.trim();
+    if (trimmed.is_empty() || trimmed == DEFAULT_BINARY) && is_background_process_running() {
+        return true;
+    }
     let Ok(output) = status_command(configured).output() else {
         return false;
     };
@@ -604,6 +611,142 @@ pub fn stop_active_recording_in(proc_root: &Path, pid: u32) -> io::Result<()> {
 
 pub fn stop_active_recording(pid: u32) -> io::Result<()> {
     stop_active_recording_in(Path::new("/proc"), pid)
+}
+
+pub fn is_background_process_cmdline(args: &[String]) -> bool {
+    let Some(first) = args.first() else {
+        return false;
+    };
+    let Some(exe_name) = Path::new(first).file_name().and_then(|s| s.to_str()) else {
+        return false;
+    };
+    if exe_name != "gsr-ui" && exe_name != "gpu-screen-recorder" {
+        return false;
+    }
+
+    let info_flags = [
+        "--info",
+        "--help",
+        "-h",
+        "--version",
+        "--list-capture-options",
+        "--list-monitors",
+        "--list-audio-devices",
+        "--list-application-audio",
+        "--list-v4l2-devices",
+    ];
+    !args.iter().any(|arg| info_flags.contains(&arg.as_str()))
+}
+
+pub fn detect_background_pids_in(proc_root: &Path) -> Vec<u32> {
+    let Ok(entries) = fs::read_dir(proc_root) else {
+        return Vec::new();
+    };
+    let mut pids = Vec::new();
+
+    for entry in entries.flatten() {
+        let file_name = entry.file_name();
+        let Some(name_str) = file_name.to_str() else {
+            continue;
+        };
+        let Ok(pid) = name_str.parse::<u32>() else {
+            continue;
+        };
+
+        let proc_dir = entry.path();
+        let cmdline_bytes = match fs::read(proc_dir.join("cmdline")) {
+            Ok(b) if !b.is_empty() => b,
+            _ => continue,
+        };
+
+        let args = parse_cmdline_bytes(&cmdline_bytes);
+        if is_background_process_cmdline(&args) {
+            pids.push(pid);
+        }
+    }
+
+    pids.sort_unstable();
+    pids
+}
+
+pub fn is_background_process_running_in(proc_root: &Path) -> bool {
+    !detect_background_pids_in(proc_root).is_empty()
+}
+
+pub fn is_background_process_running() -> bool {
+    is_background_process_running_in(Path::new("/proc"))
+}
+
+pub fn kill_background_processes_in(proc_root: &Path) -> io::Result<()> {
+    if let Some(active) = detect_active_recording_in(proc_root, SystemTime::now()) {
+        let _ = stop_active_recording_in(proc_root, active.pid);
+    }
+
+    let pids = detect_background_pids_in(proc_root);
+    if pids.is_empty() {
+        return Ok(());
+    }
+
+    for pid in &pids {
+        let _ = Command::new("kill")
+            .args(["-s", "TERM", &pid.to_string()])
+            .current_dir("/tmp")
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+    }
+
+    for _ in 0..20 {
+        if !is_background_process_running_in(proc_root) {
+            return Ok(());
+        }
+        thread::sleep(Duration::from_millis(50));
+    }
+
+    for pid in detect_background_pids_in(proc_root) {
+        let _ = Command::new("kill")
+            .args(["-s", "KILL", &pid.to_string()])
+            .current_dir("/tmp")
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+    }
+
+    for _ in 0..6 {
+        if !is_background_process_running_in(proc_root) {
+            return Ok(());
+        }
+        thread::sleep(Duration::from_millis(50));
+    }
+
+    Ok(())
+}
+
+pub fn kill_background_processes() -> io::Result<()> {
+    kill_background_processes_in(Path::new("/proc"))
+}
+
+pub fn toggle_daemon(configured: &str) -> io::Result<bool> {
+    let config = load_ui_config();
+    let trimmed = configured.trim();
+    let use_proc = trimmed.is_empty() || trimmed == DEFAULT_BINARY;
+    let running = if use_proc {
+        is_background_process_running() || is_daemon_running(configured)
+    } else {
+        is_daemon_running(configured)
+    };
+
+    if running {
+        kill_background_processes()?;
+        notify_recording_event(&config, "Stopped GPU Screen Recorder");
+        Ok(false)
+    } else {
+        ensure_daemon_running(configured)?;
+        notify_recording_event(&config, "Started GPU Screen Recorder");
+        Ok(true)
+    }
 }
 
 pub fn start_screen_recording(configured: &str, config: &GsrUiConfig) -> io::Result<u32> {
@@ -1217,6 +1360,37 @@ mod tests {
         let log = fs::read_to_string(&log_file).unwrap();
         let lines: Vec<&str> = log.lines().collect();
         assert_eq!(lines, vec!["launched", "recorder:-w:HDMI-A-1"]);
+
+        let _ = fs::remove_dir_all(&temp);
+    }
+
+    #[test]
+    fn detects_and_kills_background_processes_in_mock_proc() {
+        let temp = std::env::temp_dir().join(format!("gsr_bg_proc_test_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&temp);
+        fs::create_dir_all(temp.join("3001")).unwrap();
+        fs::create_dir_all(temp.join("3002")).unwrap();
+        fs::create_dir_all(temp.join("3003")).unwrap();
+
+        fs::write(
+            temp.join("3001/cmdline"),
+            b"/usr/bin/gsr-ui\0launch-daemon\0",
+        )
+        .unwrap();
+        fs::write(
+            temp.join("3002/cmdline"),
+            b"/usr/bin/gpu-screen-recorder\0--list-monitors\0",
+        )
+        .unwrap();
+        fs::write(
+            temp.join("3003/cmdline"),
+            b"/home/mario/.config/opendeck/plugins/open-actions-gsr\0",
+        )
+        .unwrap();
+
+        let pids = detect_background_pids_in(&temp);
+        assert_eq!(pids, vec![3001]);
+        assert!(is_background_process_running_in(&temp));
 
         let _ = fs::remove_dir_all(&temp);
     }

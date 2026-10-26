@@ -6,6 +6,7 @@ An OpenAction plugin for OpenDeck that controls [GPU Screen Recorder](https://gi
 
 - **Record Screen** (`io.github.mario.gpuscreenrecorder.record-screen`): Toggles whole-screen / monitor recording (`gpu-screen-recorder -w <monitor>`).
 - **Record Window** (`io.github.mario.gpuscreenrecorder.record-window`): Automatically toggles recording of the currently focused window (using GNOME Shell `Introspect` + XDG Desktop Portal session restore on Wayland, or `-w focused` on X11).
+- **Toggle Background Service** (`io.github.mario.gpuscreenrecorder.toggle-daemon`): Starts `gsr-ui launch-daemon` in the background if not running, or cleanly stops any active recording (`SIGINT`) and kills the background `gsr-ui` / `gpu-screen-recorder` processes if running. Displays live `ON` / `OFF` status on the key face.
 
 ## Prerequisites
 

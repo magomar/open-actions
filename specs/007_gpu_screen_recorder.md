@@ -20,12 +20,15 @@ An OpenAction plugin (`actions/gpu-screen-recorder/`) for OpenDeck and compatibl
 
 ### 1. Actions & Hardware Key Interactions
 
-The plugin registers two Keypad actions under the `GPU Screen Recorder` category:
+The plugin registers three Keypad actions under the `GPU Screen Recorder` category:
 
 1. **Record Screen (`io.github.mario.gpuscreenrecorder.record-screen`)**:
    - **Press (`key_up`)**: Starts or stops recording the primary monitor (`gpu-screen-recorder -w <monitor>`) using the user's preferences in `~/.config/gpu-screen-recorder/config_ui`.
 2. **Record Window (`io.github.mario.gpuscreenrecorder.record-window`)**:
    - **Press (`key_up`)**: Automatically starts or stops recording the currently focused window (queries `org.gnome.Shell.Introspect.GetWindows` and seeds `org.freedesktop.impl.portal.PermissionStore` with a restore token on Wayland, or uses `-w focused` on X11, without requiring an interactive window picker dialog).
+3. **Toggle Background Service (`io.github.mario.gpuscreenrecorder.toggle-daemon`)**:
+   - **Press (`key_up`)**: Starts `gsr-ui launch-daemon` in the background when no `gsr-ui` or `gpu-screen-recorder` process is running, or stops any active recording (`SIGINT`) and terminates all background `gsr-ui` and `gpu-screen-recorder` processes (`SIGTERM` -> `SIGKILL` fallback) when running.
+   - **Live Status**: Polls `/proc` at 1 Hz to show an emerald `● ON / SERVICE` tile when the background process is active and a muted `OFF / SERVICE` tile when stopped.
 
 ### 2. Button Face (144×144 Dynamic SVG Tile Rendering)
 
@@ -187,8 +190,15 @@ Persisted JSON payload:
 
 - **Scenario: Auto-launches gsr-ui daemon when not already running**
   - [x] **Given** `gsr-ui` is not currently running (`gsr-ui-cli status` reports `not running`)
-  - [x] **When** a button appears or the user presses **Record Screen** or **Record Window**
+  - [x] **When** the user presses **Record Screen** or **Record Window**
   - [x] **Then** the plugin automatically spawns `gsr-ui launch-daemon`, waits until `gsr-ui-cli status` reports `running`, and completes the requested recording toggle
+
+- **Scenario: Toggle Background Service button starts and kills background process**
+  - [x] **Given** the **Toggle Background Service** button is visible on the device
+  - [x] **When** the user presses the button while `gsr-ui` is not running
+  - [x] **Then** `gsr-ui launch-daemon` starts in the background and the button icon switches to the emerald `● ON / SERVICE` tile
+  - [x] **And When** the user presses the button again while `gsr-ui` (or `gpu-screen-recorder`) is running in the background
+  - [x] **Then** any active recording is cleanly stopped (`SIGINT`), the background `gsr-ui` / `gpu-screen-recorder` processes are terminated, and the button icon switches to the muted `OFF / SERVICE` tile
 
 - **Scenario: Missing binary surfaces an alert**
   - [x] **Given** `gsr_ui_cli_path` points to a non-existent binary or `gsr-ui` cannot be launched
@@ -211,9 +221,9 @@ Persisted JSON payload:
 - `[x]` `src/gsr.rs` -> `gsr-ui-cli` path resolution, command execution (`toggle-record`, `toggle-record-window`, `status`), `/proc` cmdline parsing, `CaptureMode` classification, and elapsed duration formatting.
 - `[x]` `src/icon.rs` -> Dynamic 144×144 SVG data-URI renderer for Screen and Window tiles (idle and active recording states with `MM:SS` / `H:MM:SS` timer readout).
 - `[x]` `pi/` -> Svelte Property Inspector (`package.json`, `vite.config.ts`, `src/App.svelte`) for configuring `gsr_ui_cli_path` and viewing live `gsr-ui` daemon status.
-- `[x]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/manifest.json` -> OpenAction manifest declaring the `Record Screen` and `Record Window` actions.
+- `[x]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/manifest.json` -> OpenAction manifest declaring the `Record Screen`, `Record Window`, and `Toggle Background Service` actions.
 - `[x]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/icon.svg` -> Plugin category icon.
-- `[x]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/actions/` -> Static action list icons (`record-screen.svg`, `record-window.svg`).
+- `[x]` `plugin/io.github.mario.gpuscreenrecorder.sdPlugin/actions/` -> Static action list icons (`record-screen.svg`, `record-window.svg`, `toggle-daemon.svg`).
 - `[x]` `scripts/package.sh`, `README.md` -> Build, packaging, and installation instructions.
 
 ### Modified Repository Files

@@ -11,6 +11,15 @@ pub fn render_tile(action_mode: CaptureMode, recording_elapsed_secs: Option<u64>
     format!("data:image/svg+xml;base64,{}", base64(svg.as_bytes()))
 }
 
+pub fn render_daemon_tile(running: bool) -> String {
+    let svg = if running {
+        render_daemon_running()
+    } else {
+        render_daemon_stopped()
+    };
+    format!("data:image/svg+xml;base64,{}", base64(svg.as_bytes()))
+}
+
 fn render_screen_idle() -> String {
     concat!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">"##,
@@ -108,6 +117,44 @@ fn render_window_recording(elapsed_secs: u64) -> String {
     )
 }
 
+fn render_daemon_running() -> String {
+    concat!(
+        r##"<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">"##,
+        r##"<rect width="144" height="144" rx="20" fill="#0f1f18"/>"##,
+        r##"<rect x="3" y="3" width="138" height="138" rx="17" fill="none" stroke="#10b981" stroke-width="4"/>"##,
+        // Top ON badge
+        r##"<circle cx="54" cy="20" r="5.5" fill="#10b981"/>"##,
+        r##"<text x="66" y="25" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" letter-spacing="1.2">ON</text>"##,
+        // Power emblem
+        r##"<circle cx="72" cy="64" r="27" fill="#062c1f" stroke="#10b981" stroke-width="3.5"/>"##,
+        r##"<path d="M61 52 A16 16 0 1 0 83 52" fill="none" stroke="#6ee7b7" stroke-width="4" stroke-linecap="round"/>"##,
+        r##"<line x1="72" y1="44" x2="72" y2="63" stroke="#6ee7b7" stroke-width="4" stroke-linecap="round"/>"##,
+        // Footer label
+        r##"<text x="72" y="124" text-anchor="middle" fill="#6ee7b7" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="800" letter-spacing="1.5">SERVICE</text>"##,
+        r##"</svg>"##
+    )
+    .to_string()
+}
+
+fn render_daemon_stopped() -> String {
+    concat!(
+        r##"<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">"##,
+        r##"<rect width="144" height="144" rx="20" fill="#18181b"/>"##,
+        r##"<rect x="3" y="3" width="138" height="138" rx="17" fill="none" stroke="#27272a" stroke-width="2"/>"##,
+        // Top OFF badge
+        r##"<circle cx="50" cy="20" r="5" fill="none" stroke="#64748b" stroke-width="2.5"/>"##,
+        r##"<text x="62" y="25" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" letter-spacing="1.2">OFF</text>"##,
+        // Power emblem
+        r##"<circle cx="72" cy="64" r="27" fill="#0f172a" stroke="#475569" stroke-width="3.5"/>"##,
+        r##"<path d="M61 52 A16 16 0 1 0 83 52" fill="none" stroke="#64748b" stroke-width="4" stroke-linecap="round"/>"##,
+        r##"<line x1="72" y1="44" x2="72" y2="63" stroke="#64748b" stroke-width="4" stroke-linecap="round"/>"##,
+        // Footer label
+        r##"<text x="72" y="124" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700" letter-spacing="1.5">SERVICE</text>"##,
+        r##"</svg>"##
+    )
+    .to_string()
+}
+
 fn base64(input: &[u8]) -> String {
     const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut output = String::with_capacity(input.len().div_ceil(3) * 4);
@@ -166,5 +213,11 @@ mod tests {
         assert!(svg_window.contains("1:01:01"));
         assert!(svg_window.contains("REC"));
         assert!(svg_window.contains("WINDOW"));
+
+        let daemon_on = render_daemon_tile(true);
+        let daemon_off = render_daemon_tile(false);
+        assert!(daemon_on.starts_with("data:image/svg+xml;base64,"));
+        assert!(daemon_off.starts_with("data:image/svg+xml;base64,"));
+        assert_ne!(daemon_on, daemon_off);
     }
 }

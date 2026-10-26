@@ -13,6 +13,7 @@
 
   const actionUuid = $derived($actionInfo?.action ?? "");
   const isWindowAction = $derived(actionUuid.endsWith(".record-window"));
+  const isDaemonAction = $derived(actionUuid.endsWith(".toggle-daemon"));
 
   let daemonRunning = $state(false);
   let recording = $state(false);
@@ -54,7 +55,11 @@
   <div class="card">
     <div class="row">
       <span style="font-weight: 700; color: #f4f4f5;">
-        {isWindowAction ? "Record Window" : "Record Screen"}
+        {isDaemonAction
+          ? "Toggle Background Service"
+          : isWindowAction
+            ? "Record Window"
+            : "Record Screen"}
       </span>
       <div style="display: flex; gap: 6px; align-items: center;">
         {#if recording}
@@ -70,10 +75,12 @@
       </div>
     </div>
     <p class="hint">
-      {#if isWindowAction}
-        Toggles window recording via <code>gsr-ui-cli toggle-record-window</code> (opens the XDG Desktop Portal window picker on Wayland, or selects a window on X11).
+      {#if isDaemonAction}
+        Starts the background <code>gsr-ui</code> daemon if stopped, or stops active recordings and kills the background GPU Screen Recorder process if running.
+      {:else if isWindowAction}
+        Automatically starts or stops recording the currently focused window without a portal picker dialog.
       {:else}
-        Toggles whole-screen recording via <code>gsr-ui-cli toggle-record</code> using your <code>gsr-ui</code> monitor and audio settings.
+        Starts or stops whole-screen recording using your <code>gsr-ui</code> monitor and audio settings.
       {/if}
     </p>
   </div>

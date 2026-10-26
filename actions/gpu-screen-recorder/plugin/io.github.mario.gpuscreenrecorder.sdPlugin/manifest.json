@@ -23,6 +23,14 @@
       "Tooltip": "Toggle GPU Screen Recorder focused-window recording",
       "Controllers": ["Keypad"],
       "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
+    },
+    {
+      "UUID": "io.github.mario.gpuscreenrecorder.toggle-daemon",
+      "Name": "Toggle Background Service",
+      "Icon": "actions/toggle-daemon",
+      "Tooltip": "Start or kill the GPU Screen Recorder background process",
+      "Controllers": ["Keypad"],
+      "States": [{ "Title": "", "TitleAlignment": "middle", "FontStyle": "Bold" }]
     }
   ]
 }

@@ -23,6 +23,7 @@ use crate::gsr::{ActiveRecording, CaptureMode};
 
 pub const RECORD_SCREEN_UUID: &str = "io.github.mario.gpuscreenrecorder.record-screen";
 pub const RECORD_WINDOW_UUID: &str = "io.github.mario.gpuscreenrecorder.record-window";
+pub const TOGGLE_DAEMON_UUID: &str = "io.github.mario.gpuscreenrecorder.toggle-daemon";
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(default)]
@@ -30,10 +31,22 @@ pub struct Settings {
     pub gsr_ui_cli_path: String,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ActionKind {
+    Capture(CaptureMode),
+    Daemon,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum RenderedState {
+    Capture(Option<u64>),
+    Daemon(bool),
+}
+
 #[derive(Clone, Debug)]
 struct InstanceEntry {
-    mode: CaptureMode,
-    last_rendered_elapsed: Option<Option<u64>>,
+    kind: ActionKind,
+    last_rendered: Option<RenderedState>,
 }
 
 pub fn elapsed_for_action(
@@ -41,6 +54,28 @@ pub fn elapsed_for_action(
     active: Option<ActiveRecording>,
 ) -> Option<u64> {
     active.and_then(|rec| (rec.mode == action_mode).then_some(rec.elapsed_secs))
+}
+
+fn compute_rendered_state(
+    kind: ActionKind,
+    active: Option<ActiveRecording>,
+    bg_running: bool,
+) -> RenderedState {
+    match kind {
+        ActionKind::Capture(mode) => RenderedState::Capture(elapsed_for_action(mode, active)),
+        ActionKind::Daemon => RenderedState::Daemon(bg_running),
+    }
+}
+
+fn render_state_image(kind: ActionKind, state: RenderedState) -> String {
+    match (kind, state) {
+        (ActionKind::Capture(mode), RenderedState::Capture(elapsed)) => {
+            icon::render_tile(mode, elapsed)
+        }
+        (ActionKind::Daemon, RenderedState::Daemon(running)) => icon::render_daemon_tile(running),
+        (ActionKind::Capture(mode), _) => icon::render_tile(mode, None),
+        (ActionKind::Daemon, _) => icon::render_daemon_tile(false),
+    }
 }
 
 fn log_event(message: &str) {
@@ -126,7 +161,10 @@ fn build_profile_will_appear_events(info_json: &str) -> Vec<(String, String)> {
             let Some(uuid) = action_obj.get("uuid").and_then(Value::as_str) else {
                 continue;
             };
-            if uuid != RECORD_SCREEN_UUID && uuid != RECORD_WINDOW_UUID {
+            if uuid != RECORD_SCREEN_UUID
+                && uuid != RECORD_WINDOW_UUID
+                && uuid != TOGGLE_DAEMON_UUID
+            {
                 continue;
             }
             let Some(short_ctx) = key_obj.get("context").and_then(Value::as_str) else {
@@ -345,38 +383,28 @@ impl GsrCore {
     async fn upsert_instance(
         &self,
         instance: &Instance,
-        mode: CaptureMode,
-        settings: &Settings,
+        kind: ActionKind,
+        _settings: &Settings,
     ) -> OpenActionResult<()> {
         log_event(&format!(
-            "upsert_instance id={} mode={mode:?}",
+            "upsert_instance id={} kind={kind:?}",
             instance.instance_id
         ));
-        let cli_path = settings.gsr_ui_cli_path.clone();
-        tokio::task::spawn_blocking(move || {
-            let _ = gsr::ensure_daemon_running(&cli_path);
-        });
-
+        let active = gsr::detect_active_recording();
+        let bg_running = active.is_some() || gsr::is_background_process_running();
+        let state = compute_rendered_state(kind, active, bg_running);
         {
             let mut map = self.instances.lock().await;
             map.insert(
                 instance.instance_id.clone(),
                 InstanceEntry {
-                    mode,
-                    last_rendered_elapsed: None,
+                    kind,
+                    last_rendered: Some(state),
                 },
             );
         }
-        let active = gsr::detect_active_recording();
-        let elapsed = elapsed_for_action(mode, active);
-        {
-            let mut map = self.instances.lock().await;
-            if let Some(entry) = map.get_mut(&instance.instance_id) {
-                entry.last_rendered_elapsed = Some(elapsed);
-            }
-        }
         instance
-            .set_image(Some(icon::render_tile(mode, elapsed)), None)
+            .set_image(Some(render_state_image(kind, state)), None)
             .await
     }
 
@@ -391,23 +419,24 @@ impl GsrCore {
         }
 
         let active = gsr::detect_active_recording();
-        let mut updates: Vec<(String, CaptureMode, Option<u64>)> = Vec::new();
+        let bg_running = active.is_some() || gsr::is_background_process_running();
+        let mut updates: Vec<(String, ActionKind, RenderedState)> = Vec::new();
 
         {
             let mut map = self.instances.lock().await;
             for (instance_id, entry) in map.iter_mut() {
-                let target_elapsed = elapsed_for_action(entry.mode, active);
-                if force || entry.last_rendered_elapsed != Some(target_elapsed) {
-                    entry.last_rendered_elapsed = Some(target_elapsed);
-                    updates.push((instance_id.clone(), entry.mode, target_elapsed));
+                let target_state = compute_rendered_state(entry.kind, active, bg_running);
+                if force || entry.last_rendered != Some(target_state) {
+                    entry.last_rendered = Some(target_state);
+                    updates.push((instance_id.clone(), entry.kind, target_state));
                 }
             }
         }
 
-        for (instance_id, mode, elapsed) in updates {
+        for (instance_id, kind, state) in updates {
             if let Some(instance) = get_instance(instance_id).await {
                 let _ = instance
-                    .set_image(Some(icon::render_tile(mode, elapsed)), None)
+                    .set_image(Some(render_state_image(kind, state)), None)
                     .await;
             }
         }
@@ -446,7 +475,7 @@ impl GsrCore {
             {
                 let mut map = self.instances.lock().await;
                 if let Some(entry) = map.get_mut(&instance.instance_id) {
-                    entry.last_rendered_elapsed = Some(None);
+                    entry.last_rendered = Some(RenderedState::Capture(None));
                 }
             }
             return instance
@@ -455,6 +484,37 @@ impl GsrCore {
         }
 
         tokio::time::sleep(Duration::from_millis(120)).await;
+        self.sync_all(true).await;
+        Ok(())
+    }
+
+    async fn toggle_daemon(
+        &self,
+        instance: &Instance,
+        settings: &Settings,
+    ) -> OpenActionResult<()> {
+        let _guard = self.toggle_lock.lock().await;
+        let path = settings.gsr_ui_cli_path.clone();
+        let result = tokio::task::spawn_blocking(move || gsr::toggle_daemon(&path)).await;
+
+        let succeeded = match &result {
+            Ok(Ok(running)) => {
+                log_event(&format!("toggle_daemon succeeded (running={running})"));
+                true
+            }
+            Ok(Err(err)) => {
+                log_event(&format!("toggle_daemon error: {err}"));
+                false
+            }
+            Err(err) => {
+                log_event(&format!("toggle_daemon join error: {err}"));
+                false
+            }
+        };
+        if !succeeded {
+            instance.show_alert().await?;
+        }
+
         self.sync_all(true).await;
         Ok(())
     }
@@ -507,7 +567,7 @@ impl Action for RecordScreenAction {
         settings: &Self::Settings,
     ) -> OpenActionResult<()> {
         self.core
-            .upsert_instance(instance, CaptureMode::Screen, settings)
+            .upsert_instance(instance, ActionKind::Capture(CaptureMode::Screen), settings)
             .await
     }
 
@@ -526,7 +586,7 @@ impl Action for RecordScreenAction {
         settings: &Self::Settings,
     ) -> OpenActionResult<()> {
         self.core
-            .upsert_instance(instance, CaptureMode::Screen, settings)
+            .upsert_instance(instance, ActionKind::Capture(CaptureMode::Screen), settings)
             .await
     }
 
@@ -563,7 +623,7 @@ impl Action for RecordWindowAction {
         settings: &Self::Settings,
     ) -> OpenActionResult<()> {
         self.core
-            .upsert_instance(instance, CaptureMode::Window, settings)
+            .upsert_instance(instance, ActionKind::Capture(CaptureMode::Window), settings)
             .await
     }
 
@@ -582,7 +642,7 @@ impl Action for RecordWindowAction {
         settings: &Self::Settings,
     ) -> OpenActionResult<()> {
         self.core
-            .upsert_instance(instance, CaptureMode::Window, settings)
+            .upsert_instance(instance, ActionKind::Capture(CaptureMode::Window), settings)
             .await
     }
 
@@ -590,6 +650,60 @@ impl Action for RecordWindowAction {
         self.core
             .toggle(instance, CaptureMode::Window, settings)
             .await
+    }
+
+    async fn send_to_plugin(
+        &self,
+        instance: &Instance,
+        settings: &Self::Settings,
+        payload: &Value,
+    ) -> OpenActionResult<()> {
+        self.core
+            .handle_pi_message(instance, settings, payload)
+            .await
+    }
+}
+
+struct ToggleDaemonAction {
+    core: Arc<GsrCore>,
+}
+
+#[async_trait]
+impl Action for ToggleDaemonAction {
+    const UUID: &'static str = TOGGLE_DAEMON_UUID;
+    type Settings = Settings;
+
+    async fn will_appear(
+        &self,
+        instance: &Instance,
+        settings: &Self::Settings,
+    ) -> OpenActionResult<()> {
+        self.core
+            .upsert_instance(instance, ActionKind::Daemon, settings)
+            .await
+    }
+
+    async fn will_disappear(
+        &self,
+        instance: &Instance,
+        _settings: &Self::Settings,
+    ) -> OpenActionResult<()> {
+        self.core.remove_instance(&instance.instance_id).await;
+        Ok(())
+    }
+
+    async fn did_receive_settings(
+        &self,
+        instance: &Instance,
+        settings: &Self::Settings,
+    ) -> OpenActionResult<()> {
+        self.core
+            .upsert_instance(instance, ActionKind::Daemon, settings)
+            .await
+    }
+
+    async fn key_up(&self, instance: &Instance, settings: &Self::Settings) -> OpenActionResult<()> {
+        self.core.toggle_daemon(instance, settings).await
     }
 
     async fn send_to_plugin(
@@ -612,7 +726,7 @@ async fn main() -> OpenActionResult<()> {
 
     let watcher_core = Arc::clone(&core);
     tokio::spawn(async move {
-        let mut ticker = tokio::time::interval(Duration::from_millis(500));
+        let mut ticker = tokio::time::interval(Duration::from_millis(1000));
         loop {
             ticker.tick().await;
             if self_binary_was_deleted() {
@@ -627,7 +741,11 @@ async fn main() -> OpenActionResult<()> {
         core: Arc::clone(&core),
     })
     .await;
-    register_action(RecordWindowAction { core }).await;
+    register_action(RecordWindowAction {
+        core: Arc::clone(&core),
+    })
+    .await;
+    register_action(ToggleDaemonAction { core }).await;
 
     let args = setup_ws_bridge(std::env::args().collect());
     run(args).await
@@ -663,6 +781,27 @@ mod tests {
 
         assert_eq!(elapsed_for_action(CaptureMode::Screen, None), None);
         assert_eq!(elapsed_for_action(CaptureMode::Window, None), None);
+    }
+
+    #[test]
+    fn computes_rendered_state_for_capture_and_daemon_actions() {
+        let screen_rec = Some(ActiveRecording {
+            pid: 100,
+            mode: CaptureMode::Screen,
+            elapsed_secs: 10,
+        });
+        assert_eq!(
+            compute_rendered_state(ActionKind::Capture(CaptureMode::Screen), screen_rec, true),
+            RenderedState::Capture(Some(10))
+        );
+        assert_eq!(
+            compute_rendered_state(ActionKind::Daemon, screen_rec, true),
+            RenderedState::Daemon(true)
+        );
+        assert_eq!(
+            compute_rendered_state(ActionKind::Daemon, None, false),
+            RenderedState::Daemon(false)
+        );
     }
 
     #[test]
