@@ -16,6 +16,7 @@ In a Keel-managed project, **Specifications are the absolute contracts of execut
 2. **Comprehensive Preflight Diagnostics:** Run `keel doctor` to diagnose environment, issue tracker, and OKF compliance; run `keel validate` to verify spec integrity and acceptance criteria before requesting approval on changes.
 3. **Surgical Changes:** Touch only what you must. Do not improve, format, or refactor unrelated adjacent code. Match the existing style exactly.
 4. **Zero Residual Dead Code:** Prune all imports, variables, or functions rendered unused/obsolete by your changes.
+5. **Repackage After Updating `main`:** Always run `./scripts/package.sh` inside any modified `actions/<name>/` directory **after** merging into or switching to the `main` branch, ensuring git-ignored plugin bundles (`plugin/*.zip` and compiled `.sdPlugin` assets) in the workspace are up to date with `main`.
 
 ## 🔄 3. SDD Lifecycle Mapping
 
